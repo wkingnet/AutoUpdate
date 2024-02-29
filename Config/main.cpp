@@ -24,8 +24,6 @@ INT_PTR CALLBACK ProcConfig(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
 
   switch (msg) {
   case WM_INITDIALOG:
-    // 设置对话框的图标
-    //SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hgInst, MAKEINTRESOURCE(IDI_APP)));
     return 0;
   case WM_SYSCOMMAND:
     if (wParam == SC_CLOSE) {
