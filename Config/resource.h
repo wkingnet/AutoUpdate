@@ -22,6 +22,7 @@
 #define IDC_BUTTON_LOAD                 1009
 #define IDC_BUTTON7                     1010
 #define IDC_BUTTON7_SAVE                1010
+#define IDC_BUTTON_SAVE                 1010
 #define IDC_BUTTON8                     1011
 #define IDC_BUTTON_XML                  1011
 #define IDC_CHECK1                      1012
