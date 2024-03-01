@@ -244,7 +244,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     if (const LPITEMIDLIST lpItem = SHBrowseForFolder(&lpbi)) {
       SHGetPathFromIDList(lpItem, szFile);
 
-      // 获取临时listview控件句柄
+      // 获取listview控件句柄
       HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
 
       // 生成列表项前禁用重绘，以便加快窗口生成速度
@@ -311,6 +311,25 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
   }
 
   if (id == IDC_BUTTON_DELETE) {
+    // 获取listview控件句柄
+    HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
+    vector<int> indexes;
+    int iPos = ListView_GetNextItem(hList, -1, LVNI_SELECTED); // Get the first selected item
 
+    // 先把所有选择的项保存到vector，不能直接删除会造成索引错乱
+    while (iPos != -1) {
+      indexes.emplace_back(iPos);
+      iPos = ListView_GetNextItem(hList, iPos, LVNI_SELECTED);
+    }
+
+    // 降序排序，以便所有从后往前删除
+    ranges::sort(indexes, greater());
+
+    // 禁用重绘，以便加快窗口生成速度
+    SendMessage(hList, WM_SETREDRAW, FALSE, 0);
+    for (const auto& idx : indexes)
+      ListView_DeleteItem(hList, idx);
+    // 启用重绘，以便加快窗口生成速度
+    SendMessage(hList, WM_SETREDRAW, TRUE, 0);
   }
 }
