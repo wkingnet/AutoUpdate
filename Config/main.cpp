@@ -162,13 +162,12 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
     // use the contents of szFile to initialize itself.
     ofn.lpstrFile[0] = '\0';
-    ofn.nMaxFile = sizeof(szFile);
+    ofn.nMaxFile = MAXWORD;
     ofn.nFilterIndex = 1;
-    ofn.nMaxFileTitle = 0;
     ofn.lpstrInitialDir = update_path.data();
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-    if (GetOpenFileName(&ofn) == TRUE) {
+    if (GetOpenFileName(&ofn)) {
       // 选择了文件
       wstring filename(szFile);
       // 如果文件路径中包括update_path，则把文件路径中的update_path部分替换为空
@@ -223,6 +222,8 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
         MessageBox(hwnd, _T("请添加更新目录下的文件"), nullptr, MB_ICONERROR | MB_OK);
       }
     }
+    else
+      cout << format("选择文件错误代码：{:x}\n", CommDlgExtendedError());
 
     delete[] szFile;
   }

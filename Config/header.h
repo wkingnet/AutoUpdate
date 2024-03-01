@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <iostream>
 #include <Shlobj.h>
-//#include <ShlObj_core.h>
+#include <ShlObj_core.h>
 #include <string>
 #include <tchar.h>
 #define NOMINMAX
