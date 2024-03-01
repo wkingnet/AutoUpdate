@@ -364,11 +364,12 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       ListView_GetItemText(hList, i, 2, exec, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
       ListView_GetItemText(hList, i, 3, unzip, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
 
-      wchar_t* number;  // 用于保存转换到数字的值
       xini_file[key]["value1"] = unicode2ansi(value1).c_str();
-      xini_file[key]["value2"] = std::wcstol(exec, &number, 10);
-      xini_file[key]["value3"] = std::wcstol(unzip, &number, 10);
+      xini_file[key]["value2"] = std::wcstol(exec, nullptr, 10);
+      xini_file[key]["value3"] = std::wcstol(unzip, nullptr, 10);
     }
     delete[] value1;
+
+    MessageBox(hwnd, L"保存配置完成，保存在程序目录的config.cfg文件", nullptr, MB_ICONINFORMATION | MB_OK);
   }
 }
