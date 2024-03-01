@@ -68,7 +68,7 @@ BOOL Cls_OnInitDialog(const HWND hwnd, HWND hwndFocus, LPARAM lParam) {
   ignore = SHGetDesktopFolder(&pShellFolder);
   ignore = pShellFolder->ParseDisplayName(nullptr, nullptr, update_path.data(), nullptr, &update_idl, nullptr);
 
-  SetWindowText(GetDlgItem(hwnd, IDC_EDIT_PATH), update_path.data());
+  SetWindowText(GetDlgItem(hwnd, IDC_EDIT_DIR), update_path.data());
 
   // 获取对话框信息并移动窗口到屏幕中间
   WINDOWINFO wininfo{};
@@ -146,7 +146,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       SHGetPathFromIDList(update_idl, szFile);
       update_path = szFile;
       update_path += L"\\";
-      SetWindowText(GetDlgItem(hwnd, IDC_EDIT_PATH), update_path.data());
+      SetWindowText(GetDlgItem(hwnd, IDC_EDIT_DIR), update_path.data());
     }
 
     delete[] szFile;
@@ -308,5 +308,9 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     }
 
     delete[] szFile;
+  }
+
+  if (id == IDC_BUTTON_DELETE) {
+
   }
 }
