@@ -6,7 +6,7 @@ using namespace std;
 HINSTANCE g_hInst;
 wstring update_path{};  // 更新目录
 wstring update_url{};  // 更新URL
-ITEMIDLIST* update_idl = nullptr;  // 更新目录的ITEMIDLIST
+ITEMIDLIST* update_idl = nullptr;  // 保存更新目录文件夹的ITEMIDLIST
 
 int WINAPI WinMain(_In_ const HINSTANCE hInstance,
                    _In_opt_  HINSTANCE hPrevInstance,
@@ -62,14 +62,15 @@ INT_PTR CALLBACK ProcConfig(const HWND hDlg, const UINT msg, const WPARAM wParam
 }
 
 BOOL Cls_OnInitDialog(const HWND hwnd, HWND hwndFocus, LPARAM lParam) {
+  /*
   // 调试用，指定更新目录，以及获取更新目录对应的IDL
   // https://winterdom.com/dev/ui/ishfolder/
   update_path = L"F:\\down\\gvo\\";
   LPSHELLFOLDER pShellFolder = nullptr;
   ignore = SHGetDesktopFolder(&pShellFolder);
   ignore = pShellFolder->ParseDisplayName(nullptr, nullptr, update_path.data(), nullptr, &update_idl, nullptr);
-
   SetWindowText(GetDlgItem(hwnd, IDC_EDIT_DIR), update_path.data());
+  */
 
   // 获取对话框信息并移动窗口到屏幕中间
   WINDOWINFO wininfo{};
@@ -371,5 +372,86 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     delete[] value1;
 
     MessageBox(hwnd, L"保存配置完成，保存在程序目录的config.cfg文件", nullptr, MB_ICONINFORMATION | MB_OK);
+  }
+
+  if (id == IDC_BUTTON_LOAD) {
+    // 如果不存在config.cfg则提示并退出
+    if (_waccess_s(L"config.cfg", 0) != 0) {
+      MessageBox(hwnd, L"程序目录不存在config.cfg文件，无法读取配置", nullptr, MB_ICONERROR | MB_OK);
+      return;
+    }
+
+    xini_file_t xini_file("config.cfg");
+    wstring wstr(L"abcde");
+    update_path = ansi2unicode((const char*)xini_file["config"]["dir"]);
+    update_url = ansi2unicode((const char*)xini_file["config"]["url"]);
+    SetWindowText(GetDlgItem(hwnd, IDC_EDIT_DIR), update_path.data());
+    SetWindowText(GetDlgItem(hwnd, IDC_EDIT_URL), update_url.data());
+
+    // 设置添加目录的根路径
+    LPSHELLFOLDER pShellFolder = nullptr;
+    ignore = SHGetDesktopFolder(&pShellFolder);
+    ignore = pShellFolder->ParseDisplayName(nullptr, nullptr, update_path.data(), nullptr, &update_idl, nullptr);
+
+    // 获取listview控件句柄
+    HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
+
+    // 如果Listview已有项目则清除
+    if (ListView_GetItemCount(hList) > 0)
+      ListView_DeleteAllItems(hList);
+
+    // 循环读取config.cfg文件中的file?项，并添加到listview
+    for (int i = 0; i < (int)xini_file["config"]["count"]; i++) {
+      string key("file" + to_string(i));
+      wstring value1(ansi2unicode((const char*)xini_file[key]["value1"]));
+      wstring value2(ansi2unicode((const char*)xini_file[key]["value2"]));
+      wstring value3(ansi2unicode((const char*)xini_file[key]["value3"]));
+
+      if constexpr (_DEBUG) {
+        wcout << "value1=" << value1;
+        wcout << "\tvalue2=" << value2;
+        wcout << "\tvalue3=" << value3 << "\n";
+      }
+
+      const HANDLE hFile = CreateFile((update_path + value1).data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+      // 获取文件大小
+      const DWORD dwSize = GetFileSize(hFile, nullptr);
+
+      // 创建文件大小的字节指针，将文件读入指针，然后计算CRC32
+      const auto pFile = new BYTE[dwSize];
+      ignore = ReadFile(hFile, pFile, dwSize, nullptr, nullptr);
+      wstring crc32 = calc_crc32(pFile, dwSize);
+
+      int item_count = ListView_GetItemCount(hList);
+      // 插入Listview
+      LVITEM row = {}; // 创建item结构体
+      row.mask = LVIF_TEXT | LVIF_STATE;
+      row.pszText = (LPWSTR)L"";
+      row.iItem = item_count;
+      row.iSubItem = 0;
+      ListView_InsertItem(hList, &row);
+      row.pszText = value1.data();
+      row.iItem = item_count;
+      row.iSubItem = 1;
+      ListView_SetItem(hList, &row);
+      row.pszText = value2.data();
+      row.iItem = item_count;
+      row.iSubItem = 2;
+      ListView_SetItem(hList, &row);
+      row.pszText = value3.data();
+      row.iItem = item_count;
+      row.iSubItem = 3;
+      ListView_SetItem(hList, &row);
+      wstring tmp = std::to_wstring(dwSize);
+      row.pszText = tmp.data();
+      row.iItem = item_count;
+      row.iSubItem = 4;
+      ListView_SetItem(hList, &row);
+      row.pszText = crc32.data();
+      row.iItem = item_count;
+      row.iSubItem = 5;
+      ListView_SetItem(hList, &row);
+    }
   }
 }

@@ -25,27 +25,6 @@ void Cls_OnSysCommand(HWND hwnd, UINT cmd, int x, int y);
 void Cls_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
 
 /**
- * \brief Convert an wide Unicode string to ANSI string
- * \param wstr 输入的wstring字符串
- * \return string
- * \note 转换后末尾有\0终止符，比较字符串时注意。再加.c_str()可消除\0终止符
- */
-inline std::string unicode2ansi(const std::wstring& wstr) {
-  const int size_needed = WideCharToMultiByte(CP_ACP, 0, wstr.data(), -1, nullptr, 0, nullptr, nullptr);
-  std::string strTo(size_needed, 0);
-  WideCharToMultiByte(CP_ACP, 0, wstr.data(), (int)wstr.size(), strTo.data(), size_needed, nullptr, nullptr);
-  return strTo;
-}
-
-// Convert an ANSI string to a wide Unicode String
-inline std::wstring ansi2unicode(const std::string& str) {
-  const int size_needed = MultiByteToWideChar(CP_ACP, 0, str.data(), (int)str.size(), nullptr, 0);
-  std::wstring wstrTo(size_needed, 0);
-  MultiByteToWideChar(CP_ACP, 0, str.data(), (int)str.size(), wstrTo.data(), size_needed);
-  return wstrTo;
-}
-
-/**
  * \brief Convert a wide Unicode string to an UTF8 string
  * \param wstr 输入的wstring字符串
  * \return string
@@ -57,6 +36,35 @@ inline std::string unicode2utf8(const std::wstring& wstr) {
   WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(), strTo.data(), size_needed, nullptr, nullptr);
   return strTo;
   //return boost::locale::conv::utf_to_utf<char>(wstr);
+}
+
+// Convert an UTF8 string to a wide Unicode String
+inline std::wstring utf82unicode(const std::string& str) {
+  int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+  std::wstring wstrTo(size_needed, 0);
+  MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+  return wstrTo;
+}
+
+/**
+ * \brief Convert an wide Unicode string to ANSI string
+ * \param wstr 输入的wstring字符串
+ * \return string
+ * \note 转换后末尾有\0终止符，比较字符串时注意。再加.c_str()可消除\0终止符
+ */
+inline std::string unicode2ansi(const std::wstring& wstr) {
+  int size_needed = WideCharToMultiByte(CP_ACP, 0, &wstr[0], -1, NULL, 0, NULL, NULL);
+  std::string strTo(size_needed, 0);
+  WideCharToMultiByte(CP_ACP, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+  return strTo;
+}
+
+// Convert an ANSI string to a wide Unicode String
+inline std::wstring ansi2unicode(const std::string& str) {
+  int size_needed = MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), NULL, 0);
+  std::wstring wstrTo(size_needed, 0);
+  MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+  return wstrTo;
 }
 
 /*
