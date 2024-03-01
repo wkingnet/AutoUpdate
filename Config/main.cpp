@@ -140,10 +140,10 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     lpbi.lParam = 0;
     lpbi.iImage = -1;
 
-    // 使用SHBrowseForFolder函数获取文件夹的PIDL，再使用SHGetPathFromIDList函数获取文件夹的路径，存放在szFile
-    update_idl = SHBrowseForFolder(&lpbi);
-    if (update_idl) {
-      SHGetPathFromIDList(update_idl, szFile);
+    // 使用SHBrowseForFolder函数获取文件夹的PIDL，如果有PIDL，再使用SHGetPathFromIDList函数获取文件夹的路径，存放在szFile
+    if (const auto idl = SHBrowseForFolder(&lpbi)) {
+      SHGetPathFromIDList(idl, szFile);
+      update_idl = idl;
       update_path = szFile;
       update_path += L"\\";
       SetWindowText(GetDlgItem(hwnd, IDC_EDIT_DIR), update_path.data());
