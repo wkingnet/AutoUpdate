@@ -244,6 +244,12 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     if (const LPITEMIDLIST lpItem = SHBrowseForFolder(&lpbi)) {
       SHGetPathFromIDList(lpItem, szFile);
 
+      // 获取临时listview控件句柄
+      HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
+
+      // 生成列表项前禁用重绘，以便加快窗口生成速度
+      SendMessage(hList, WM_SETREDRAW, FALSE, 0);
+
       // 使用recursive_directory_iterator函数遍历(子)文件和文件夹
       wstring dir(szFile);
       for (const auto& dir_entry : filesystem::recursive_directory_iterator(szFile)) {
@@ -265,38 +271,40 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
             filename.replace(filename.find(update_path), update_path.size(), L"");
           }
 
-          int item_count = ListView_GetItemCount(GetDlgItem(hwnd, IDC_LIST_FILES));
+          int item_count = ListView_GetItemCount(hList);
           LVITEM row = {}; // 创建item结构体
           row.mask = LVIF_TEXT | LVIF_STATE;
           row.pszText = (LPWSTR)L"";
           row.iItem = item_count;
           row.iSubItem = 0;
-          ListView_InsertItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+          ListView_InsertItem(hList, &row);
           row.pszText = filename.data();
           row.iItem = item_count;
           row.iSubItem = 1;
-          ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+          ListView_SetItem(hList, &row);
           row.pszText = nullptr;
           row.iItem = item_count;
           row.iSubItem = 2;
-          ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+          ListView_SetItem(hList, &row);
           row.pszText = nullptr;
           row.iItem = item_count;
           row.iSubItem = 3;
-          ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+          ListView_SetItem(hList, &row);
           wstring tmp = std::to_wstring(dwSize);
           row.pszText = tmp.data();
           row.iItem = item_count;
           row.iSubItem = 4;
-          ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+          ListView_SetItem(hList, &row);
           row.pszText = crc32.data();
           row.iItem = item_count;
           row.iSubItem = 5;
-          ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+          ListView_SetItem(hList, &row);
 
           delete[] pFile;
         }
       }
+      // 生成列表项后启用重绘，以便加快窗口生成速度
+      SendMessage(hList, WM_SETREDRAW, TRUE, 0);
     }
 
     delete[] szFile;
