@@ -9,6 +9,7 @@
 #define NOMINMAX
 #include <Windows.h>
 #include <Windowsx.h>
+#include "xini_file.h"
 
 // 开启可视化效果
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -44,6 +45,19 @@ inline std::wstring ansi2unicode(const std::string& str) {
   return wstrTo;
 }
 
+/**
+ * \brief Convert a wide Unicode string to an UTF8 string
+ * \param wstr 输入的wstring字符串
+ * \return string
+ * \note 转换后VS显示乱码，无法比较字符串
+ */
+inline std::string unicode2utf8(const std::wstring& wstr) {
+  const int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(), nullptr, 0, nullptr, nullptr);
+  std::string strTo(size_needed, 0);
+  WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(), strTo.data(), size_needed, nullptr, nullptr);
+  return strTo;
+  //return boost::locale::conv::utf_to_utf<char>(wstr);
+}
 
 /*
 @brief GetLastError()封装

@@ -5,6 +5,7 @@ using namespace std;
 
 HINSTANCE g_hInst;
 wstring update_path{};  // 更新目录
+wstring update_url{};  // 更新URL
 ITEMIDLIST* update_idl = nullptr;  // 更新目录的ITEMIDLIST
 
 int WINAPI WinMain(_In_ const HINSTANCE hInstance,
@@ -282,11 +283,11 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
           row.iItem = item_count;
           row.iSubItem = 1;
           ListView_SetItem(hList, &row);
-          row.pszText = nullptr;
+          row.pszText = (LPWSTR)L"1";
           row.iItem = item_count;
           row.iSubItem = 2;
           ListView_SetItem(hList, &row);
-          row.pszText = nullptr;
+          row.pszText = (LPWSTR)L"0";
           row.iItem = item_count;
           row.iSubItem = 3;
           ListView_SetItem(hList, &row);
@@ -331,5 +332,43 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       ListView_DeleteItem(hList, idx);
     // 启用重绘，以便加快窗口生成速度
     SendMessage(hList, WM_SETREDRAW, TRUE, 0);
+  }
+
+  if (id == IDC_BUTTON_SAVE) {
+    // 如果已存在config.cfg则删除
+    if (_waccess_s(L"config.cfg", 0) == 0)
+      DeleteFile(L"config.cfg");
+
+    xini_file_t xini_file("config.cfg");
+    xini_file["config"]["dir"] = unicode2ansi(update_path).c_str();
+
+    // 获取URL控件长度和内容
+    int length = Edit_GetTextLength(GetDlgItem(hwnd, IDC_EDIT_URL)) + 1;
+    update_url.resize(length);
+    Edit_GetText(GetDlgItem(hwnd, IDC_EDIT_URL), update_url.data(), length);
+    xini_file["config"]["url"] = unicode2ansi(update_url).c_str();
+
+    // 保存listview内容，只保存相对路径、执行、解压
+    // 获取listview控件句柄
+    HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
+    // 先获取数量并写入
+    int item_count = ListView_GetItemCount(hList);
+    xini_file["config"]["count"] = item_count;
+    auto value1 = new wchar_t[MAXWORD];
+    wchar_t exec[2]{};
+    wchar_t unzip[2]{};
+    for (int i = 0; i < item_count; i++) {
+      string key("file" + to_string(i));
+
+      ListView_GetItemText(hList, i, 1, value1, MAXWORD);  // NOLINT(clang-diagnostic-extra-semi-stmt)
+      ListView_GetItemText(hList, i, 2, exec, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
+      ListView_GetItemText(hList, i, 3, unzip, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
+
+      wchar_t* number;  // 用于保存转换到数字的值
+      xini_file[key]["value1"] = unicode2ansi(value1).c_str();
+      xini_file[key]["value2"] = std::wcstol(exec, &number, 10);
+      xini_file[key]["value3"] = std::wcstol(unzip, &number, 10);
+    }
+    delete[] value1;
   }
 }
