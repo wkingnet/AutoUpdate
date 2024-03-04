@@ -501,4 +501,8 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       }
     }
   }
+
+  if(id==IDC_BUTTON_XML) {
+    
+  }
 }
