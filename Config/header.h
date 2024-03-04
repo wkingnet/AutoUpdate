@@ -10,6 +10,7 @@
 #include <Windows.h>
 #include <Windowsx.h>
 #include "xini_file.h"
+#include "tinyxml2.h"
 
 // 开启可视化效果
 #pragma comment(linker,"\"/manifestdependency:type='win32' \

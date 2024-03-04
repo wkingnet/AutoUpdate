@@ -1,5 +1,7 @@
-﻿#include "header.h"
+﻿// ReSharper disable CppClangTidyClangDiagnosticExtraSemiStmt
+#include "header.h"
 #include "resource.h"
+#include <ctime>
 
 using namespace std;
 
@@ -365,9 +367,9 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     for (int i = 0; i < item_count; i++) {
       string key("file" + to_string(i));
 
-      ListView_GetItemText(hList, i, 1, path, MAXWORD);  // NOLINT(clang-diagnostic-extra-semi-stmt)
-      ListView_GetItemText(hList, i, 2, exec, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
-      ListView_GetItemText(hList, i, 3, unzip, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
+      ListView_GetItemText(hList, i, 1, path, MAXWORD);
+      ListView_GetItemText(hList, i, 2, exec, 2);
+      ListView_GetItemText(hList, i, 3, unzip, 2);
 
       xini_file[key]["path"] = unicode2ansi(path).c_str();
       //xini_file[key]["exec"] = std::wcstol(exec, nullptr, 10);
@@ -491,18 +493,108 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
 
     wchar_t exec[2]{};
     for (const auto& i : indexes) {
-      ListView_GetItemText(hList, i, 3, exec, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
+      ListView_GetItemText(hList, i, 3, exec, 2);
       // 如果是空
       if (wcscmp(exec, L"") == 0) {
-        ListView_SetItemText(hList, i, 3, (LPWSTR)L"1");// NOLINT(clang-diagnostic-extra-semi-stmt)
+        ListView_SetItemText(hList, i, 3, (LPWSTR)L"1");
       }
       else {
-        ListView_SetItemText(hList, i, 3, (LPWSTR)L"");// NOLINT(clang-diagnostic-extra-semi-stmt)
+        ListView_SetItemText(hList, i, 3, (LPWSTR)L"");
       }
     }
   }
 
-  if(id==IDC_BUTTON_XML) {
-    
+  if (id == IDC_BUTTON_XML) {
+    using namespace tinyxml2;
+
+    tinyxml2::XMLDocument doc;
+    XMLDeclaration* declaration = doc.NewDeclaration("xml version='1.0' encoding='GB2312' standalone='yes'");
+
+
+    XMLElement* root = doc.NewElement("Root");
+    {
+      XMLElement* config = doc.NewElement("config");
+
+      // 生成时间元素
+      XMLElement* create_time = doc.NewElement("time");
+      tm t;   //tm结构指针
+      time_t now;  //声明time_t类型变量
+      ignore = time(&now);      //获取系统日期和时间保存在now
+      ignore = localtime_s(&t, &now);   //将time_t格式的时间值now转换为tm结构保存在t，并针对本地时区进行更正
+      char time_buf[100]{};
+      ignore = std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &t);
+
+      create_time->InsertEndChild(doc.NewText(time_buf));
+      config->InsertEndChild(create_time);
+
+      // 生成url元素
+      XMLElement* url = doc.NewElement("url");
+      url->InsertEndChild(doc.NewText("http://www.baidu.com"));
+      config->InsertEndChild(url);
+
+      // config插入到root
+      root->InsertEndChild(config);
+    }
+
+    {
+      XMLElement* filelist = doc.NewElement("filelist");
+
+      // 遍历文件
+      auto buf = new wchar_t[MAXWORD];
+      string strtmp;
+      for (int i = 0; i < ListView_GetItemCount(hList); i++) {
+        XMLElement* file = doc.NewElement("file");
+
+        ListView_GetItemText(hList, i, 1, buf, MAXWORD);
+        strtmp = unicode2ansi(buf);
+        XMLElement* path = doc.NewElement("path");
+        path->InsertEndChild(doc.NewText(strtmp.data()));
+        file->InsertEndChild(path);
+
+        ListView_GetItemText(hList, i, 2, buf, MAXWORD);
+        strtmp = unicode2ansi(buf);
+        XMLElement* exec = doc.NewElement("exec");
+        exec->InsertEndChild(doc.NewText(strtmp.data()));
+        file->InsertEndChild(exec);
+
+        ListView_GetItemText(hList, i, 3, buf, MAXWORD);
+        strtmp = unicode2ansi(buf);
+        XMLElement* unzip = doc.NewElement("unzip");
+        unzip->InsertEndChild(doc.NewText(strtmp.data()));
+        file->InsertEndChild(unzip);
+
+        ListView_GetItemText(hList, i, 4, buf, MAXWORD);
+        strtmp = unicode2ansi(buf);
+        XMLElement* size = doc.NewElement("size");
+        size->InsertEndChild(doc.NewText(strtmp.data()));
+        file->InsertEndChild(size);
+
+        ListView_GetItemText(hList, i, 5, buf, MAXWORD);
+        strtmp = unicode2ansi(buf);
+        XMLElement* CRC32 = doc.NewElement("CRC32");
+        CRC32->InsertEndChild(doc.NewText(strtmp.data()));
+        file->InsertEndChild(CRC32);
+
+        filelist->InsertEndChild(file);
+      }
+
+      // filelist插入到root
+      root->InsertEndChild(filelist);
+    }
+
+    // 加入最顶层节点
+    //doc.InsertEndChild(doc.NewDeclaration());
+    doc.InsertEndChild(declaration);
+    doc.InsertEndChild(root);
+
+    doc.SaveFile("update.xml");
+
+    if (doc.ErrorID()) {
+      wstring wstr(L"文件保存错误, errorID=");
+      wstr += to_wstring(doc.ErrorID());
+      MessageBox(hwnd, wstr.data(), nullptr, MB_ICONERROR | MB_OK);
+    }
+    else
+      MessageBox(hwnd, L"生成xml完成，保存在程序目录的update.xml文件", nullptr, MB_ICONINFORMATION | MB_OK);
   }
 }
