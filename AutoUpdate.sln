@@ -7,9 +7,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AutoUpdate", "AutoUpdate\Au
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Config", "Config\Config.vcxproj", "{63FA359F-EBE5-4F52-B369-7EB04E8C4A0C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Updater", "Updater\Updater.vcxproj", "{F69D89A9-BD28-46ED-B860-61B4F2A1678A}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxitems", "{B9FE9075-218B-4B9A-B243-B9EB2642150D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Updater", "Updater\Updater.vcxproj", "{7D2E069B-99B8-4770-A8E3-C20C004160DD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,14 +35,14 @@ Global
 		{63FA359F-EBE5-4F52-B369-7EB04E8C4A0C}.Release|x64.Build.0 = Release|x64
 		{63FA359F-EBE5-4F52-B369-7EB04E8C4A0C}.Release|x86.ActiveCfg = Release|Win32
 		{63FA359F-EBE5-4F52-B369-7EB04E8C4A0C}.Release|x86.Build.0 = Release|Win32
-		{F69D89A9-BD28-46ED-B860-61B4F2A1678A}.Debug|x64.ActiveCfg = Debug|x64
-		{F69D89A9-BD28-46ED-B860-61B4F2A1678A}.Debug|x64.Build.0 = Debug|x64
-		{F69D89A9-BD28-46ED-B860-61B4F2A1678A}.Debug|x86.ActiveCfg = Debug|Win32
-		{F69D89A9-BD28-46ED-B860-61B4F2A1678A}.Debug|x86.Build.0 = Debug|Win32
-		{F69D89A9-BD28-46ED-B860-61B4F2A1678A}.Release|x64.ActiveCfg = Release|x64
-		{F69D89A9-BD28-46ED-B860-61B4F2A1678A}.Release|x64.Build.0 = Release|x64
-		{F69D89A9-BD28-46ED-B860-61B4F2A1678A}.Release|x86.ActiveCfg = Release|Win32
-		{F69D89A9-BD28-46ED-B860-61B4F2A1678A}.Release|x86.Build.0 = Release|Win32
+		{7D2E069B-99B8-4770-A8E3-C20C004160DD}.Debug|x64.ActiveCfg = Debug|x64
+		{7D2E069B-99B8-4770-A8E3-C20C004160DD}.Debug|x64.Build.0 = Debug|x64
+		{7D2E069B-99B8-4770-A8E3-C20C004160DD}.Debug|x86.ActiveCfg = Debug|Win32
+		{7D2E069B-99B8-4770-A8E3-C20C004160DD}.Debug|x86.Build.0 = Debug|Win32
+		{7D2E069B-99B8-4770-A8E3-C20C004160DD}.Release|x64.ActiveCfg = Release|x64
+		{7D2E069B-99B8-4770-A8E3-C20C004160DD}.Release|x64.Build.0 = Release|x64
+		{7D2E069B-99B8-4770-A8E3-C20C004160DD}.Release|x86.ActiveCfg = Release|Win32
+		{7D2E069B-99B8-4770-A8E3-C20C004160DD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -53,6 +53,5 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.vcxitems*{63fa359f-ebe5-4f52-b369-7eb04e8c4a0c}*SharedItemsImports = 4
 		Common\Common.vcxitems*{b9fe9075-218b-4b9a-b243-b9eb2642150d}*SharedItemsImports = 9
-		Common\Common.vcxitems*{f69d89a9-bd28-46ed-b860-61b4f2a1678a}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal
