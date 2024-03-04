@@ -122,6 +122,10 @@ BOOL Cls_OnInitDialog(const HWND hwnd, HWND hwndFocus, LPARAM lParam) {
   column.iSubItem = 5;//子项索引
   ListView_InsertColumn(hListview, 5, &column);
 
+  // 如果存在config.cfg则自动加载
+  if (_waccess_s(L"config.cfg", 0) == 0)
+    PostMessage(hwnd, WM_COMMAND, IDC_BUTTON_LOAD, 0);
+
   return TRUE;
 }
 
