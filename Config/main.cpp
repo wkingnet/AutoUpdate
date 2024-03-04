@@ -337,8 +337,13 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
 
   if (id == IDC_BUTTON_SAVE) {
     // 如果已存在config.cfg则删除
-    if (_waccess_s(L"config.cfg", 0) == 0)
-      DeleteFile(L"config.cfg");
+    if (_waccess_s(L"config.cfg", 0) == 0) {
+      if (MessageBox(hwnd, L"已存在配置文件，是否覆盖？", L"提示", MB_ICONINFORMATION | MB_YESNO) == IDYES)
+        DeleteFile(L"config.cfg");
+      else
+        return;
+    }
+
 
     xini_file_t xini_file("config.cfg");
     xini_file["config"]["dir"] = unicode2ansi(update_path).c_str();
