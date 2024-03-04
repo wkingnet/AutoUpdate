@@ -1,7 +1,6 @@
 ﻿// ReSharper disable CppClangTidyClangDiagnosticExtraSemiStmt
 #include "header.h"
 #include "resource.h"
-#include <ctime>
 
 using namespace std;
 
