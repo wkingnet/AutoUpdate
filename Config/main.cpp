@@ -87,7 +87,6 @@ BOOL Cls_OnInitDialog(const HWND hwnd, HWND hwndFocus, LPARAM lParam) {
   // 设置ListView的列
   LVCOLUMN column = {};
   column.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
-  column.fmt = LVCFMT_CENTER; // 第一列始终左对齐，此选项为后面的列设置
 
   // 第1列
   column.pszText = (LPWSTR)L""; // 列标题
@@ -95,11 +94,13 @@ BOOL Cls_OnInitDialog(const HWND hwnd, HWND hwndFocus, LPARAM lParam) {
   column.iSubItem = 0;//子项索引，第一列无子项
   ListView_InsertColumn(hListview, 0, &column);
   // 第2列
+  column.fmt = LVCFMT_LEFT; // 左对齐
   column.pszText = (LPWSTR)L"相对路径文件"; // 列标题
   column.cx = 400;//列宽
   column.iSubItem = 1;//子项索引
   ListView_InsertColumn(hListview, 1, &column);
   // 第3列
+  column.fmt = LVCFMT_CENTER; // 居中对齐 下面都是居中对齐
   column.pszText = (LPWSTR)L"执行"; // 列标题
   column.cx = 40;//列宽
   column.iSubItem = 2;//子项索引
@@ -129,6 +130,9 @@ void Cls_OnSysCommand(HWND hwnd, const UINT cmd, int x, int y) {
 }
 
 void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify) {
+  // 获取listview控件句柄
+  HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
+
   if (id == IDC_BUTTON_SELECT_PATH) {
     // https://stackoverflow.com/questions/1953339/how-to-get-full-path-from-shbrowseforfolder-function
     auto szFile = new wchar_t[MAXWORD]; // buffer for file name
@@ -191,34 +195,34 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
         ignore = ReadFile(hFile, pFile, dwSize, nullptr, nullptr);
         wstring crc32 = calc_crc32(pFile, dwSize);
 
-        int item_count = ListView_GetItemCount(GetDlgItem(hwnd, IDC_LIST_FILES));
+        int item_count = ListView_GetItemCount(hList);
         LVITEM row = {}; // 创建item结构体
         row.mask = LVIF_TEXT | LVIF_STATE;
         row.pszText = (LPWSTR)L"";
         row.iItem = item_count;
         row.iSubItem = 0;
-        ListView_InsertItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+        ListView_InsertItem(hList, &row);
         row.pszText = filename.data();
         row.iItem = item_count;
         row.iSubItem = 1;
-        ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+        ListView_SetItem(hList, &row);
         row.pszText = nullptr;
         row.iItem = item_count;
         row.iSubItem = 2;
-        ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+        ListView_SetItem(hList, &row);
         row.pszText = nullptr;
         row.iItem = item_count;
         row.iSubItem = 3;
-        ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+        ListView_SetItem(hList, &row);
         wstring tmp = std::to_wstring(dwSize);
         row.pszText = tmp.data();
         row.iItem = item_count;
         row.iSubItem = 4;
-        ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+        ListView_SetItem(hList, &row);
         row.pszText = crc32.data();
         row.iItem = item_count;
         row.iSubItem = 5;
-        ListView_SetItem(GetDlgItem(hwnd, IDC_LIST_FILES), &row);
+        ListView_SetItem(hList, &row);
       }
       else {
         MessageBox(hwnd, _T("请添加更新目录下的文件"), nullptr, MB_ICONERROR | MB_OK);
@@ -245,9 +249,6 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     // 使用SHBrowseForFolder函数选择文件夹，返回IDL，使用SHGetPathFromIDList函数用IDL获取文件夹路径
     if (const LPITEMIDLIST lpItem = SHBrowseForFolder(&lpbi)) {
       SHGetPathFromIDList(lpItem, szFile);
-
-      // 获取listview控件句柄
-      HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
 
       // 生成列表项前禁用重绘，以便加快窗口生成速度
       SendMessage(hList, WM_SETREDRAW, FALSE, 0);
@@ -284,11 +285,11 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
           row.iItem = item_count;
           row.iSubItem = 1;
           ListView_SetItem(hList, &row);
-          row.pszText = (LPWSTR)L"1";
+          row.pszText = (LPWSTR)L"";
           row.iItem = item_count;
           row.iSubItem = 2;
           ListView_SetItem(hList, &row);
-          row.pszText = (LPWSTR)L"0";
+          row.pszText = (LPWSTR)L"";
           row.iItem = item_count;
           row.iSubItem = 3;
           ListView_SetItem(hList, &row);
@@ -313,8 +314,6 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
   }
 
   if (id == IDC_BUTTON_DELETE) {
-    // 获取listview控件句柄
-    HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
     vector<int> indexes;
     int iPos = ListView_GetNextItem(hList, -1, LVNI_SELECTED); // Get the first selected item
 
@@ -344,8 +343,10 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
         return;
     }
 
-
+    // 创建inifile对象
     xini_file_t xini_file("config.cfg");
+
+    // 这种语句为写入变量到ini文件
     xini_file["config"]["dir"] = unicode2ansi(update_path).c_str();
 
     // 获取URL控件长度和内容
@@ -355,26 +356,26 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     xini_file["config"]["url"] = unicode2ansi(update_url).c_str();
 
     // 保存listview内容，只保存相对路径、执行、解压
-    // 获取listview控件句柄
-    HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
     // 先获取数量并写入
     int item_count = ListView_GetItemCount(hList);
     xini_file["config"]["count"] = item_count;
-    auto value1 = new wchar_t[MAXWORD];
+    auto path = new wchar_t[MAXWORD];
     wchar_t exec[2]{};
     wchar_t unzip[2]{};
     for (int i = 0; i < item_count; i++) {
       string key("file" + to_string(i));
 
-      ListView_GetItemText(hList, i, 1, value1, MAXWORD);  // NOLINT(clang-diagnostic-extra-semi-stmt)
+      ListView_GetItemText(hList, i, 1, path, MAXWORD);  // NOLINT(clang-diagnostic-extra-semi-stmt)
       ListView_GetItemText(hList, i, 2, exec, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
       ListView_GetItemText(hList, i, 3, unzip, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
 
-      xini_file[key]["value1"] = unicode2ansi(value1).c_str();
-      xini_file[key]["value2"] = std::wcstol(exec, nullptr, 10);
-      xini_file[key]["value3"] = std::wcstol(unzip, nullptr, 10);
+      xini_file[key]["path"] = unicode2ansi(path).c_str();
+      //xini_file[key]["exec"] = std::wcstol(exec, nullptr, 10);
+      //xini_file[key]["unzip"] = std::wcstol(unzip, nullptr, 10);
+      xini_file[key]["exec"] = unicode2ansi(exec).c_str();
+      xini_file[key]["unzip"] = unicode2ansi(unzip).c_str();
     }
-    delete[] value1;
+    delete[] path;
 
     MessageBox(hwnd, L"保存配置完成，保存在程序目录的config.cfg文件", nullptr, MB_ICONINFORMATION | MB_OK);
   }
@@ -398,9 +399,6 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     ignore = SHGetDesktopFolder(&pShellFolder);
     ignore = pShellFolder->ParseDisplayName(nullptr, nullptr, update_path.data(), nullptr, &update_idl, nullptr);
 
-    // 获取listview控件句柄
-    HWND hList = GetDlgItem(hwnd, IDC_LIST_FILES);
-
     // 如果Listview已有项目则清除
     if (ListView_GetItemCount(hList) > 0)
       ListView_DeleteAllItems(hList);
@@ -408,14 +406,14 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     // 循环读取config.cfg文件中的file?项，并添加到listview
     for (int i = 0; i < (int)xini_file["config"]["count"]; i++) {
       string key("file" + to_string(i));
-      wstring value1(ansi2unicode((const char*)xini_file[key]["value1"]));
-      wstring value2(ansi2unicode((const char*)xini_file[key]["value2"]));
-      wstring value3(ansi2unicode((const char*)xini_file[key]["value3"]));
+      wstring value1(ansi2unicode((const char*)xini_file[key]["path"]));
+      wstring value2(ansi2unicode((const char*)xini_file[key]["exec"]));
+      wstring value3(ansi2unicode((const char*)xini_file[key]["unzip"]));
 
       if constexpr (_DEBUG) {
-        wcout << "value1=" << value1;
-        wcout << "\tvalue2=" << value2;
-        wcout << "\tvalue3=" << value3 << "\n";
+        wcout << "path=" << value1;
+        wcout << "\texec=" << value2;
+        wcout << "\tunzip=" << value3 << "\n";
       }
 
       const HANDLE hFile = CreateFile((update_path + value1).data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -457,6 +455,50 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       row.iItem = item_count;
       row.iSubItem = 5;
       ListView_SetItem(hList, &row);
+    }
+  }
+
+  if (id == IDC_CHECK_EXEC) {
+    vector<int> indexes;
+    int iPos = ListView_GetNextItem(hList, -1, LVNI_SELECTED); // Get the first selected item
+    // 先把所有选择的项保存到vector
+    while (iPos != -1) {
+      indexes.emplace_back(iPos);
+      iPos = ListView_GetNextItem(hList, iPos, LVNI_SELECTED);
+    }
+
+    wchar_t exec[2]{};
+    for (const auto& i : indexes) {
+      ListView_GetItemText(hList, i, 2, exec, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
+      // 如果是空
+      if (wcscmp(exec, L"") == 0) {
+        ListView_SetItemText(hList, i, 2, (LPWSTR)L"1");// NOLINT(clang-diagnostic-extra-semi-stmt)
+      }
+      else {
+        ListView_SetItemText(hList, i, 2, (LPWSTR)L"");// NOLINT(clang-diagnostic-extra-semi-stmt)
+      }
+    }
+  }
+
+  if (id == IDC_CHECK_UNZIP) {
+    vector<int> indexes;
+    int iPos = ListView_GetNextItem(hList, -1, LVNI_SELECTED); // Get the first selected item
+    // 先把所有选择的项保存到vector
+    while (iPos != -1) {
+      indexes.emplace_back(iPos);
+      iPos = ListView_GetNextItem(hList, iPos, LVNI_SELECTED);
+    }
+
+    wchar_t exec[2]{};
+    for (const auto& i : indexes) {
+      ListView_GetItemText(hList, i, 3, exec, 2);  // NOLINT(clang-diagnostic-extra-semi-stmt)
+      // 如果是空
+      if (wcscmp(exec, L"") == 0) {
+        ListView_SetItemText(hList, i, 3, (LPWSTR)L"1");// NOLINT(clang-diagnostic-extra-semi-stmt)
+      }
+      else {
+        ListView_SetItemText(hList, i, 3, (LPWSTR)L"");// NOLINT(clang-diagnostic-extra-semi-stmt)
+      }
     }
   }
 }
