@@ -1,243 +1,243 @@
-<?xml version='1.0' encoding='EUC' standalone='yes'?>
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <Root>
     <config>
-        <time>2024-03-04 14:57:44</time>
+        <time>2024-03-05 15:56:49</time>
         <url>http://www.baidu.com</url>
     </config>
     <filelist>
         <file>
-            <path>½ս����\comdlg32.dll</path>
+            <path>陆战助手\comdlg32.dll</path>
             <exec></exec>
             <unzip>1</unzip>
             <size>269824</size>
             <CRC32>8FF94B09</CRC32>
         </file>
         <file>
-            <path>½ս����\COMDLG32.OCX</path>
+            <path>陆战助手\COMDLG32.OCX</path>
             <exec></exec>
             <unzip></unzip>
             <size>140096</size>
             <CRC32>60AF39FF</CRC32>
         </file>
         <file>
-            <path>½ս����\config.ini</path>
+            <path>陆战助手\config.ini</path>
             <exec></exec>
             <unzip></unzip>
             <size>3044</size>
             <CRC32>FBB592F7</CRC32>
         </file>
         <file>
-            <path>½ս����\dolcc-org.exe</path>
+            <path>陆战助手\dolcc-org.exe</path>
             <exec>1</exec>
             <unzip></unzip>
             <size>995328</size>
             <CRC32>7B48BCFE</CRC32>
         </file>
         <file>
-            <path>½ս����\dolcc.exe</path>
+            <path>陆战助手\dolcc.exe</path>
             <exec></exec>
             <unzip></unzip>
             <size>995328</size>
             <CRC32>9C80C010</CRC32>
         </file>
         <file>
-            <path>½ս����\dolcc.exe.BAK</path>
+            <path>陆战助手\dolcc.exe.BAK</path>
             <exec>1</exec>
             <unzip></unzip>
             <size>950272</size>
             <CRC32>4A4BB4C8</CRC32>
         </file>
         <file>
-            <path>½ս����\KillRoute.ini</path>
+            <path>陆战助手\KillRoute.ini</path>
             <exec></exec>
             <unzip></unzip>
             <size>8375</size>
             <CRC32>E145916D</CRC32>
         </file>
         <file>
-            <path>½ս����\MSCOMCTL.OCX</path>
+            <path>陆战助手\MSCOMCTL.OCX</path>
             <exec></exec>
             <unzip></unzip>
             <size>1062704</size>
             <CRC32>8C0878A3</CRC32>
         </file>
         <file>
-            <path>½ս����\MSINET.OCX</path>
+            <path>陆战助手\MSINET.OCX</path>
             <exec></exec>
             <unzip></unzip>
             <size>115016</size>
             <CRC32>5031B24C</CRC32>
         </file>
         <file>
-            <path>½ս����\msvbvm60.dll</path>
+            <path>陆战助手\msvbvm60.dll</path>
             <exec></exec>
             <unzip></unzip>
             <size>1384479</size>
             <CRC32>F311DA9D</CRC32>
         </file>
         <file>
-            <path>½ս����\PlaySet.ini</path>
+            <path>陆战助手\PlaySet.ini</path>
             <exec></exec>
             <unzip></unzip>
             <size>1530</size>
             <CRC32>5B30C337</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\WNS-��ë��(��).dbc</path>
+            <path>陆战助手\Script\WNS-红毛城(中).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1643</size>
             <CRC32>95AA3299</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\�׶�-����(��).dbc</path>
+            <path>陆战助手\Script\伦敦-安土(中).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1687</size>
             <CRC32>E0CF0214</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\�׶�-��ë��(��).dbc</path>
+            <path>陆战助手\Script\伦敦-红毛城(中).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1743</size>
             <CRC32>C8320A5</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\����(�ż�+��ѧ).dbc</path>
+            <path>陆战助手\Script\利马(遗迹+大学).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1835</size>
             <CRC32>59A1A1A1</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\���Ǵ��Թ�.dbc</path>
+            <path>陆战助手\Script\卫城大迷宫.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>2086</size>
             <CRC32>13E592A7</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\��ά-��ë��(��).dbc</path>
+            <path>陆战助手\Script\塞维-红毛城(中).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1494</size>
             <CRC32>A11ACC1F</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\���Թ�.dbc</path>
+            <path>陆战助手\Script\大迷宫.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1913</size>
             <CRC32>712929E9</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\������̻��в�.dbc</path>
+            <path>陆战助手\Script\波尔多教会中层.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>758</size>
             <CRC32>334B0FC3</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\������ �޴�ѧ.dbc</path>
+            <path>陆战助手\Script\竞技场 无大学.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>2168</size>
             <CRC32>34BA2B26</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\������ �д�ѧ ���ٹ���.dbc</path>
+            <path>陆战助手\Script\竞技场 有大学 副官共斗.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>2022</size>
             <CRC32>6ED2736F</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\������ �д�ѧ.dbc</path>
+            <path>陆战助手\Script\竞技场 有大学.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>2092</size>
             <CRC32>190EB99D</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\��ŵ˹���Թ�.dbc</path>
+            <path>陆战助手\Script\米诺斯大迷宫.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>2173</size>
             <CRC32>69329E32</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\�����̻��ϲ�.dbc</path>
+            <path>陆战助手\Script\罗马教会上层.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1308</size>
             <CRC32>23F3FAD1</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\�����̻��в�+��ѧ.dbc</path>
+            <path>陆战助手\Script\罗马教会中层+大学.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1480</size>
             <CRC32>DA055816</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\�����̻��в�.dbc</path>
+            <path>陆战助手\Script\罗马教会中层.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1396</size>
             <CRC32>6A7FCCA2</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\��˹��-��ɽ(��).dbc</path>
+            <path>陆战助手\Script\里斯本-宋山(中).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1946</size>
             <CRC32>47E1F7AE</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\��˹��-��ë��(��).dbc</path>
+            <path>陆战助手\Script\里斯本-红毛城(中).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1701</size>
             <CRC32>18AB14AD</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\���������̻�.dbc</path>
+            <path>陆战助手\Script\锡拉库萨教会.dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>664</size>
             <CRC32>64282A24</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\��ķ-����(��).dbc</path>
+            <path>陆战助手\Script\阿姆-安土(中).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1832</size>
             <CRC32>98C816F4</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\��ķ-��ë��(��).dbc</path>
+            <path>陆战助手\Script\阿姆-红毛城(中).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1914</size>
             <CRC32>56A05E2D</CRC32>
         </file>
         <file>
-            <path>½ս����\Script\����-��ë��(��+��ѧ).dbc</path>
+            <path>陆战助手\Script\马赛-红毛城(中+大学).dbc</path>
             <exec></exec>
             <unzip></unzip>
             <size>1924</size>
             <CRC32>48367B21</CRC32>
         </file>
         <file>
-            <path>½ս����\TABCTL32.OCX</path>
+            <path>陆战助手\TABCTL32.OCX</path>
             <exec></exec>
             <unzip></unzip>
             <size>224016</size>
             <CRC32>EC11B6A2</CRC32>
         </file>
         <file>
-            <path>½ս����\����˵��.txt</path>
+            <path>陆战助手\更新说明.txt</path>
             <exec></exec>
             <unzip></unzip>
             <size>14878</size>

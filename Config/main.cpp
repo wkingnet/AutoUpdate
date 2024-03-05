@@ -1,5 +1,6 @@
 ﻿// ReSharper disable CppClangTidyClangDiagnosticExtraSemiStmt
 #include "header.h"
+#include "utils.h"
 #include "resource.h"
 
 using namespace std;
@@ -20,7 +21,7 @@ int WINAPI WinMain(_In_ const HINSTANCE hInstance,
   if (!hdlg)
     return 0;
 
-  if constexpr (_DEBUG) {
+  if constexpr (IS_DEBUG) {
     AllocConsole();
     //system("chcp 65001");
 
@@ -415,7 +416,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       wstring value2(ansi2unicode((const char*)xini_file[key]["exec"]));
       wstring value3(ansi2unicode((const char*)xini_file[key]["unzip"]));
 
-      if constexpr (_DEBUG) {
+      if constexpr (IS_DEBUG) {
         wcout << "path=" << value1;
         wcout << "\texec=" << value2;
         wcout << "\tunzip=" << value3 << "\n";
@@ -511,7 +512,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     using namespace tinyxml2;
 
     tinyxml2::XMLDocument doc;
-    XMLDeclaration* declaration = doc.NewDeclaration("xml version='1.0' encoding='GB2312' standalone='yes'");
+    XMLDeclaration* declaration = doc.NewDeclaration("xml version='1.0' encoding='UTF-8' standalone='yes'"); // 默认应该是UTF-8，文档也说是UTF-8，但实际保存的是GB2312编码，不知道原因
 
 
     XMLElement* root = doc.NewElement("Root");
@@ -542,38 +543,38 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     {
       XMLElement* filelist = doc.NewElement("filelist");
 
-      // 遍历文件
+      // 遍历生成文件元素
       auto buf = new wchar_t[MAXWORD];
       string strtmp;
       for (int i = 0; i < ListView_GetItemCount(hList); i++) {
         XMLElement* file = doc.NewElement("file");
 
         ListView_GetItemText(hList, i, 1, buf, MAXWORD);
-        strtmp = unicode2ansi(buf);
+        strtmp = unicode2utf8(buf);
         XMLElement* path = doc.NewElement("path");
         path->InsertEndChild(doc.NewText(strtmp.data()));
         file->InsertEndChild(path);
 
         ListView_GetItemText(hList, i, 2, buf, MAXWORD);
-        strtmp = unicode2ansi(buf);
+        strtmp = unicode2utf8(buf);
         XMLElement* exec = doc.NewElement("exec");
         exec->InsertEndChild(doc.NewText(strtmp.data()));
         file->InsertEndChild(exec);
 
         ListView_GetItemText(hList, i, 3, buf, MAXWORD);
-        strtmp = unicode2ansi(buf);
+        strtmp = unicode2utf8(buf);
         XMLElement* unzip = doc.NewElement("unzip");
         unzip->InsertEndChild(doc.NewText(strtmp.data()));
         file->InsertEndChild(unzip);
 
         ListView_GetItemText(hList, i, 4, buf, MAXWORD);
-        strtmp = unicode2ansi(buf);
+        strtmp = unicode2utf8(buf);
         XMLElement* size = doc.NewElement("size");
         size->InsertEndChild(doc.NewText(strtmp.data()));
         file->InsertEndChild(size);
 
         ListView_GetItemText(hList, i, 5, buf, MAXWORD);
-        strtmp = unicode2ansi(buf);
+        strtmp = unicode2utf8(buf);
         XMLElement* CRC32 = doc.NewElement("CRC32");
         CRC32->InsertEndChild(doc.NewText(strtmp.data()));
         file->InsertEndChild(CRC32);
