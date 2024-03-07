@@ -437,9 +437,23 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       const DWORD dwSize = GetFileSize(hFile, nullptr);
 
       // 创建文件大小的字节指针，将文件读入指针，然后计算CRC32
+      wstring crc32;
       const auto pFile = new BYTE[dwSize];
-      ignore = ReadFile(hFile, pFile, dwSize, nullptr, nullptr);
-      wstring crc32 = calc_crc32(pFile, dwSize);
+      if (ReadFile(hFile, pFile, dwSize, nullptr, nullptr)) {
+        crc32 = calc_crc32(pFile, dwSize);
+        delete[] pFile;
+      }
+      else {
+        cout << format("ReadFile failed {}\n", GetLastError());
+        delete[] pFile;
+        continue;
+      }
+
+      // 关闭文件句柄
+      if (!CloseHandle(hFile))
+        cout << format("CloseHandle failed {}\n", GetLastError());
+
+
 
       int item_count = ListView_GetItemCount(hList);
       // 插入Listview
