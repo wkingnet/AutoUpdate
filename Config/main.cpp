@@ -6,6 +6,7 @@
 using namespace std;
 
 HINSTANCE g_hInst;
+wstring exe_path; // 此程序运行所在目录
 wstring update_path{};  // 更新目录
 wstring update_url{};  // 更新URL
 ITEMIDLIST* update_idl = nullptr;  // 保存更新目录文件夹的ITEMIDLIST
@@ -20,6 +21,13 @@ int WINAPI WinMain(_In_ const HINSTANCE hInstance,
 
   if (!hdlg)
     return 0;
+
+  // 获取程序运行路径
+  const auto exeFullPath = new wchar_t[MAXWORD];
+  GetModuleFileName(nullptr, exeFullPath, MAXWORD);
+  exe_path = exeFullPath;
+  exe_path = exe_path.substr(0, exe_path.find_last_of('\\')) + L'\\';
+  delete[] exeFullPath;
 
   if constexpr (IS_DEBUG) {
     AllocConsole();
@@ -350,7 +358,8 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     }
 
     // 创建inifile对象
-    xini_file_t xini_file("config.cfg");
+    string filename(unicode2utf8(exe_path) + "config.cfg");
+    xini_file_t xini_file(filename);
 
     // 这种语句为写入变量到ini文件
     xini_file["config"]["dir"] = unicode2ansi(update_path).c_str();
@@ -512,7 +521,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     using namespace tinyxml2;
 
     tinyxml2::XMLDocument doc;
-    XMLDeclaration* declaration = doc.NewDeclaration("xml version='1.0' encoding='UTF-8' standalone='yes'"); // 默认应该是UTF-8，文档也说是UTF-8，但实际保存的是GB2312编码，不知道原因
+    XMLDeclaration* declaration = doc.NewDeclaration("xml version='1.0' encoding='UTF-8' standalone='yes'");
 
 
     XMLElement* root = doc.NewElement("Root");
@@ -527,13 +536,12 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       ignore = localtime_s(&t, &now);   //将time_t格式的时间值now转换为tm结构保存在t，并针对本地时区进行更正
       char time_buf[100]{};
       ignore = std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &t);
-
       create_time->InsertEndChild(doc.NewText(time_buf));
       config->InsertEndChild(create_time);
 
       // 生成url元素
       XMLElement* url = doc.NewElement("url");
-      url->InsertEndChild(doc.NewText("http://www.baidu.com"));
+      url->InsertEndChild(doc.NewText(unicode2utf8(update_url).data()));
       config->InsertEndChild(url);
 
       // config插入到root
@@ -591,7 +599,8 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     doc.InsertEndChild(declaration);
     doc.InsertEndChild(root);
 
-    doc.SaveFile("update.xml");
+    string filename(unicode2utf8(exe_path) + "update.xml");
+    doc.SaveFile(filename.c_str());
 
     if (doc.ErrorID()) {
       wstring wstr(L"文件保存错误, errorID=");
