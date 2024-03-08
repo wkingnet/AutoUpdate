@@ -494,27 +494,33 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       row.iItem = item_count;
       row.iSubItem = 0;
       ListView_InsertItem(hList, &row);
+
       row.pszText = value1.data();
       row.iItem = item_count;
       row.iSubItem = 1;
       ListView_SetItem(hList, &row);
+
       row.pszText = value2.data();
       row.iItem = item_count;
       row.iSubItem = 2;
       ListView_SetItem(hList, &row);
+
       row.pszText = value3.data();
       row.iItem = item_count;
       row.iSubItem = 3;
       ListView_SetItem(hList, &row);
+
       row.pszText = value4.data();
       row.iItem = item_count;
       row.iSubItem = 4;
       ListView_SetItem(hList, &row);
+
       wstring tmp = std::to_wstring(dwSize);
       row.pszText = tmp.data();
       row.iItem = item_count;
       row.iSubItem = 5;
       ListView_SetItem(hList, &row);
+
       row.pszText = crc32.data();
       row.iItem = item_count;
       row.iSubItem = 6;
@@ -649,7 +655,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
         ListView_GetItemText(hList, i, 4, buf, MAXWORD);
         strtmp = unicode2utf8(buf);
         XMLElement* overwrite = doc.NewElement("overwrite");
-        unzip->InsertEndChild(doc.NewText(strtmp.data()));
+        overwrite->InsertEndChild(doc.NewText(strtmp.data()));
         file->InsertEndChild(overwrite);
 
         ListView_GetItemText(hList, i, 5, buf, MAXWORD);
