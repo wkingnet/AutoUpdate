@@ -1,5 +1,5 @@
 ﻿// ReSharper disable CppClangTidyClangDiagnosticExtraSemiStmt
-
+// ReSharper disable CppClangTidyBugproneImplicitWideningOfMultiplicationResult
 #include "header.h"
 #include "resource.h"
 
@@ -11,6 +11,15 @@ tinyxml2::XMLDocument xmldoc; // 在线xml对象
 wstring update_time; // 在线xml文件的更新时间
 wstring update_url; // 在线xml文件的更新URL
 vector<XML_FILE> vecXmlfiles; // xml解析后的数据
+DWORD g_interval = GetTickCount(); // libcurl显示回调函数里间隔刷新对话框计数
+
+// 用于传递libcurl进度回调函数形参clientp的结构体
+struct CURL_XFERINFODATA {
+  CURL* curl;
+  HWND hListview;
+  size_t listview_idx; // Listview当前行索引数
+  unsigned long long total_size; // 下载文件总大小
+};
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                        _In_opt_ HINSTANCE hPrevInstance,
@@ -46,7 +55,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
   exe_path = exeFullPath;
   exe_path = exe_path.substr(0, exe_path.find_last_of('\\')) + L'\\';
   delete[] exeFullPath;
-  wcout << "exe_path=" << exe_path << endl;
+  wcout << "exe_path=" << exe_path << "\n";
 
   // 获取命令行参数
   // https://blog.csdn.net/ypist/article/details/8138310
@@ -260,7 +269,6 @@ void Cls_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify) {
 
 
 void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
-
   // 创建curl easy interface
   CURL* curl = curl_easy_init();
   if (curl == nullptr) {
@@ -269,23 +277,61 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
   }
 
   // 初始化变量和设置
+  unsigned long long total_size{};  // 所有要下载的文件总大小，用于计算剩余时间
   FILE* fp{};
+  char errbuf[CURL_ERROR_SIZE];
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);  //设置错误缓冲区
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);  // 不验证证书
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, FALSE);  // 不验证POST
   curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);  // 当HTTP返回值大于等于400的时候，请求失败
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &proc_libcurl_write);  // 设置写入回调函数
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);  // 设置写入回调函数的形参user_p，这里传递文件指针
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L); // 设置开启进度回调功能
   curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, proc_libcurl_progress);  // 设置进度回调函数
-  curl_easy_setopt(curl, CURLOPT_XFERINFODATA, nullptr);  // 设置进度回调函数形参clientp
+
+  // 先遍历一遍计算总文件大小
+  for (const auto& xml_file : xml_files)
+    total_size += stoull(xml_file.size);
 
   // 遍历
   for (size_t i = 0; i < xml_files.size(); i++) {
-    // 先校检文件，如果本地文件与在线文件数据一致，则跳过下载
     wstring filepath(exe_path + xml_files[i].path); // 文件路径
+    string urlpath(unicode2utf8(update_url + xml_files[i].path)); // URL路径
+    urlpath = subreplace(urlpath, string("\\"), string("/")); // 转换URL中的\为/
+    wcout << filepath;
 
-    // 先判断文件是否存在，如存在则校检、下载
+    // 在循环开始处设置回调函数形参clientp，避免放到循环最后导致total_size计算出错
+    CURL_XFERINFODATA clientp{ curl, hListview, i, total_size };
+    // 设置进度回调函数形参clientp
+    curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &clientp);
+    total_size -= stoull(xml_files[i].size);
+
+    // 如果相对文件路径包括目录则新建目录
+    vector<wstring> split = split_string(xml_files[i].path, LR"(\)");
+    // 大于1说明有分割，遍历且排除最后一个元素(也就是文件名)
+    if (split.size() > 1) {
+      wstring path(exe_path);
+      for (auto it = split.begin(); it != split.end() - 1; ++it) {
+        path += *it + LR"(\)";
+        if (_waccess_s(path.data(), 0) == 2)
+          CreateDirectory(path.data(), nullptr);
+      }
+    }
+
+    // 如果是进程自己则跳过
+    wchar_t processFullName[_MAX_PATH]{};
+    GetModuleFileName(nullptr, processFullName, _MAX_PATH); //进程完整路径
+    if (processFullName == exe_path + xml_files[i].path) {
+      cout << " 跳过\n";
+      ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
+      continue;
+    }
+
+    /* set the error buffer as empty before performing a request */
+    errbuf[0] = 0;
+
+    // 先判断文件是否存在，如存在则校检，校验一致跳过不下载。0=存在
     if (_waccess_s(filepath.data(), 0) == 0) {
+      cout << " 文件存在";
       // 获取文件大小以及CRC32
       // https://www.cnblogs.com/LyShark/p/13656473.html
       const HANDLE hFile = CreateFile(filepath.data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -316,37 +362,136 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
 
       // 关闭文件句柄，不成功继续下个循环
       if (!CloseHandle(hFile)) {
-        cout << format("CloseHandle failed {}\n", GetLastError());
+        cout << format("CloseHandle failed {}\n", errno);
         continue;
       }
 
-      // 如果校检一致，更新Listview
+      // 如果校检一致，更新Listview，继续下个循环
       if (crc32 == xml_files[i].CRC32) {
+        wcout << " 无需更新\n";
         ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
+        continue;
       }
-      // 不一致，下载更新
       else {
-        wcout << format(L"本地CRC32={} 在线CRC32={}\n", crc32, xml_files[i].CRC32);
+        cout << " 需要更新";
       }
+    }
+    else
+      cout << " 文件不存在";
+
+    // 打开文件，如果成功，则为零；如果失败，则为错误代码。
+    if (_wfopen_s(&fp, filepath.data(), L"wb")) {
+      char errmsg[200];
+      if (!strerror_s(errmsg, 200, errno))  // NOLINT(bugprone-not-null-terminated-result)
+        cout << format("fopen_s failed {}\n", errmsg);
+      continue;
+    }
+
+    cout << " 开始更新...";
+    // 设置写入回调函数的形参user_p，这里传递文件指针
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+
+    // 设置下载URL
+    curl_easy_setopt(curl, CURLOPT_URL, urlpath.c_str());
+
+    // 执行数据请求 因为是easy interface所以会阻塞
+    // https://curl.se/libcurl/c/CURLOPT_ERRORBUFFER.html
+    // 成功返回0；失败返回非零，且错误缓冲区中将显示可读错误消息。if the request did not complete correctly, show the error information. if no detailed error information was written to errbuf show the more generic information from curl_easy_strerror instead.
+    const CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+      cout << " 更新失败\n";
+      wcout << update_url + xml_files[i].path << L"\n";
+      const size_t len = strlen(errbuf);
+      ignore = fprintf(stderr, "libcurl: (%d) ", res);
+      if (len)
+        ignore = fprintf(stderr, "%s%s", errbuf, errbuf[len - 1] != '\n' ? "\n" : "");
+      else
+        ignore = fprintf(stderr, "%s\n", curl_easy_strerror(res));
     }
     else {
-      wcout << filepath << endl;
+      cout << " 更新成功\n";
+      ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
+    }
+
+
+    // 关闭文件指针。如果已成功关闭流，则 fclose 返回 0。 _fcloseall 返回已关闭流的总数。 这两个函数都返回 EOF，表示出现错误。
+    if (fclose(fp)) {
+      char errmsg[200];
+      if (!strerror_s(errmsg, 200, errno))  // NOLINT(bugprone-not-null-terminated-result)
+        cout << format("fclose failed {}\n", errmsg);
     }
   }
-  curl_easy_perform(curl);  // 执行数据请求 因为是easy interface所以会阻塞
+  // 清除easy interface
+  curl_easy_cleanup(curl);
 
+  SetDlgItemInt(g_hDialogUpdater, IDC_STATIC_DOWNSPEED, 0, false);
 
-  //fclose(fp);
-  curl_easy_cleanup(curl);  // 清除easy interface
+  cout << "更新完成\n";
+
+  MessageBox(nullptr, L"更新完成，程序退出", L"自动更新", MB_ICONINFORMATION | MB_OK);
+  exit(0);  // NOLINT(concurrency-mt-unsafe)
 }
 
 size_t proc_libcurl_write(const void* buffer, const size_t size, const size_t nmemb, void* user_p) {
-  //const auto fp = (FILE*)user_p;
-  //return fwrite(buffer, size, nmemb, fp);
-  return size * nmemb;
+  const auto fp = (FILE*)user_p;
+  return fwrite(buffer, size, nmemb, fp);
 }
 
-size_t proc_libcurl_progress(void* clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
+size_t proc_libcurl_progress(void* clientp, const curl_off_t dltotal, const curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
+  // https://blog.csdn.net/ixiaochouyu/article/details/47301005
+
+  const auto arg1 = static_cast<CURL_XFERINFODATA*>(clientp);
+  wchar_t remain_time[9] = L"Unknown";
+  wstring unit(L"B/s");
+
+  curl_off_t speed;
+
+  //cout << format("dltotal={} dlnow={} 下载速度={} KBytes/sec\n",dltotal, dlnow, speed / 1000);
+  curl_easy_getinfo(arg1->curl, CURLINFO_SPEED_DOWNLOAD_T, &speed);
+
+  // 如果没有速度则直接返回
+  if (!speed)
+    return 0;
+
+  // 如果间隔大于，则更新一次显示
+  const DWORD tmp_time = GetTickCount();
+  if (tmp_time - g_interval > 100) {
+    g_interval = tmp_time;
+    // Time remaining
+    const int leftTime = static_cast<int>((arg1->total_size - dlnow) / speed);
+    int hours = leftTime / 3600;
+    int minutes = (leftTime - hours * 3600) / 60;
+    int seconds = leftTime - hours * 3600 - minutes * 60;
+
+
+#ifdef _WIN64
+    ignore = swprintf_s(timeFormat, 9, L"%02d:%02d:%02d", hours, minutes, seconds);
+#else
+    ignore = swprintf_s(remain_time, L"%02d:%02d:%02d", hours, minutes, seconds);
+#endif
+
+    if (speed > 1024 * 1024 * 1024) {
+      unit = L"GB/s";
+      speed /= 1024 * 1024 * 1024;
+    }
+    else if (speed > 1024 * 1024) {
+      unit = L"MB/s";
+      speed /= 1024 * 1024;
+    }
+    else if (speed > 1024) {
+      unit = L"kB/s";
+      speed /= 1024;
+    }
+
+    // 进度显示
+    wstring wstr(format(L"{:d}%", dlnow * 100 / dltotal));
+    ListView_SetItemText(arg1->hListview, arg1->listview_idx, 1, wstr.data());
+
+    SetDlgItemInt(g_hDialogUpdater, IDC_STATIC_DOWNSPEED, (UINT)speed, false);  // 设置下载速度显示
+    SetDlgItemText(g_hDialogUpdater, IDC_STATIC_TIMELEFT, remain_time);  // 设置剩余时间显示
+    SetDlgItemText(g_hDialogUpdater, IDC_STATIC_SPEED_UNIT, unit.data());  // 设置下载单位显示
+  }
+
   return 0;
 }
 

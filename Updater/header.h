@@ -11,6 +11,7 @@
 #include <Shlobj.h>
 #include <ShlObj_core.h>
 #include <thread>
+#include <cerrno>
 
 #include "utils.h"
 #include "tinyxml2.h"

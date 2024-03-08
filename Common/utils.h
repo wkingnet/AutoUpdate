@@ -102,3 +102,107 @@ inline wstring calc_crc32(const BYTE* ptr, DWORD Size) {
   ignore = sprintf_s(crc32, "%X", crcTmp2);
   return wstring{ crc32, crc32 + strlen(crc32) };
 }
+
+// 分割字符串，返回分割后的子串
+inline vector<string> split_string(const string& str, const string& split) {
+  if (str.empty())
+    return {};
+  vector<string> res{};
+
+  //在字符串末尾也加入分隔符，方便截取最后一段
+  string strs = str + split;
+  size_t pos = strs.find(split);
+  const size_t step = split.size();
+
+  // 若找不到内容则字符串搜索函数返回 npos
+  while (pos != strs.npos) {
+    string temp = strs.substr(0, pos);
+    res.emplace_back(temp);
+    //去掉已分割的字符串,在剩下的字符串中进行分割
+    strs = strs.substr(pos + step, strs.size());
+    pos = strs.find(split);
+  }
+  return res;
+}
+
+// 分割字符串，返回分割后的子串
+inline vector<wstring> split_string(const wstring& str, const wstring& split) {
+  if (str.empty())
+    return {};
+  vector<wstring> res{};
+
+  //在字符串末尾也加入分隔符，方便截取最后一段
+  wstring strs = str + split;
+  size_t pos = strs.find(split);
+  const size_t step = split.size();
+
+  // 若找不到内容则字符串搜索函数返回 npos
+  while (pos != strs.npos) {
+    wstring temp = strs.substr(0, pos);
+    res.emplace_back(temp);
+    //去掉已分割的字符串,在剩下的字符串中进行分割
+    strs = strs.substr(pos + step, strs.size());
+    pos = strs.find(split);
+  }
+  return res;
+}
+
+// 分割字符串，返回分割后的子串
+inline vector<string> split_string(const string& str, const char& split) {
+  if (str.empty())
+    return {};
+  vector<string> res{};
+
+  //在字符串末尾也加入分隔符，方便截取最后一段
+  string strs = str + split;
+  size_t pos = strs.find(split);
+
+  // 若找不到内容则字符串搜索函数返回 npos
+  while (pos != strs.npos) {
+    string temp = strs.substr(0, pos);
+    res.emplace_back(temp);
+    //去掉已分割的字符串,在剩下的字符串中进行分割
+    strs = strs.substr(pos + 1, strs.size());
+    pos = strs.find(split);
+  }
+  return res;
+}
+
+// 分割字符串，返回分割后的子串
+inline vector<wstring> split_string(const wstring& str, const wchar_t& split) {
+  if (str.empty())
+    return {};
+  vector<wstring> res{};
+
+  //在字符串末尾也加入分隔符，方便截取最后一段
+  wstring strs = str + split;
+  size_t pos = strs.find(split);
+
+  // 若找不到内容则字符串搜索函数返回 npos
+  while (pos != strs.npos) {
+    wstring temp = strs.substr(0, pos);
+    res.emplace_back(temp);
+    //去掉已分割的字符串,在剩下的字符串中进行分割
+    strs = strs.substr(pos + 1, strs.size());
+    pos = strs.find(split);
+  }
+  return res;
+}
+
+/**
+ * \brief 字符串替换函数
+ * \param resource_str 源字符串
+ * \param sub_str 被替换子串
+ * \param new_str 替换子串
+ * \return 替换后的字符串
+ */
+template <typename T = string>
+T subreplace(const T& resource_str, const T& sub_str, const T& new_str) {
+  T dst_str = resource_str;
+  size_t pos;
+  while ((pos = dst_str.find(sub_str)) != T::npos)   //替换所有指定子串
+  {
+    dst_str.replace(pos, sub_str.length(), new_str);
+  }
+  return dst_str;
+}
