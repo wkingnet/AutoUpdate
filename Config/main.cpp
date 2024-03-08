@@ -425,7 +425,6 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     }
 
     xini_file_t xini_file(config_path);
-    wstring wstr(L"abcde");
     update_path = ansi2unicode((const char*)xini_file["config"]["dir"]);
     update_url = ansi2unicode((const char*)xini_file["config"]["url"]);
     SetWindowText(GetDlgItem(hwnd, IDC_EDIT_DIR), update_path.data());
@@ -449,13 +448,20 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       wstring value4(ansi2unicode((const char*)xini_file[key]["overwrite"]));
 
       if constexpr (IS_DEBUG) {
-        wcout << "path=" << value1;
-        wcout << "\texec=" << value2;
-        wcout << "\tunzip=" << value3;
-        wcout << "\toverwrite=" << value4 << "\n";
+        wcout << "path=" << exe_path + value1;
+        wcout << " exec=" << value2;
+        wcout << " unzip=" << value3;
+        wcout << " overwrite=" << value4 << "\n";
       }
 
       const HANDLE hFile = CreateFile((update_path + value1).data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+      // 文件打开失败
+      if (hFile == INVALID_HANDLE_VALUE) {
+        cout << "CreateFile failed ";
+        LastError();
+        continue;
+      }
 
       // 获取文件大小
       const DWORD dwSize = GetFileSize(hFile, nullptr);
@@ -469,15 +475,16 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       }
       else {
         cout << format("ReadFile failed {}\n", GetLastError());
+        LastError();
         delete[] pFile;
         continue;
       }
 
       // 关闭文件句柄
-      if (!CloseHandle(hFile))
+      if (!CloseHandle(hFile)) {
         cout << format("CloseHandle failed {}\n", GetLastError());
-
-
+        LastError();
+      }
 
       int item_count = ListView_GetItemCount(hList);
       // 插入Listview

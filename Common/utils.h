@@ -71,7 +71,7 @@ inline void LastError() {
 
   // Display the error message and exit the process
   if (lpMsgBuf) {
-    MessageBox(nullptr, (LPCWSTR)lpMsgBuf, _T("Error"), MB_OK | MB_ICONINFORMATION);
+    wcout << (LPCWSTR)lpMsgBuf;
   }
   else
     cout << "GetLastError: cannot find this error info.\n";
