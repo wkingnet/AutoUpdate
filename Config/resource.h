@@ -15,6 +15,8 @@
 #define IDC_BUTTON_XML                  1011
 #define IDC_CHECK_EXEC                  1012
 #define IDC_CHECK_UNZIP                 1013
+#define IDC_CHECK_UNZIP2                1014
+#define IDC_CHECK_OVERWRITE             1014
 
 // Next default values for new objects
 // 

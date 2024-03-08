@@ -5,6 +5,7 @@
 #include <Shlobj.h>
 #include <ShlObj_core.h>
 #include <string>
+#include <io.h>
 #include <tchar.h>
 #define NOMINMAX
 #include <Windows.h>
@@ -28,3 +29,4 @@ INT_PTR CALLBACK ProcConfig(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam);
 void Cls_OnSysCommand(HWND hwnd, UINT cmd, int x, int y);
 void Cls_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
+void Cls_OnNotify(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

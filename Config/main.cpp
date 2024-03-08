@@ -1,4 +1,5 @@
 ﻿// ReSharper disable CppClangTidyClangDiagnosticExtraSemiStmt
+// ReSharper disable CppClangTidyPerformanceNoIntToPtr
 #include "header.h"
 #include "utils.h"
 #include "resource.h"
@@ -16,18 +17,6 @@ int WINAPI WinMain(_In_ const HINSTANCE hInstance,
                    _In_  LPSTR lpCmdLine,
                    _In_  int nCmdShow) {
   g_hInst = hInstance;
-
-  const HWND hdlg = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG_CONFIG), GetDesktopWindow(), ProcConfig);
-
-  if (!hdlg)
-    return 0;
-
-  // 获取程序运行路径
-  const auto exeFullPath = new wchar_t[MAXWORD];
-  GetModuleFileName(nullptr, exeFullPath, MAXWORD);
-  exe_path = exeFullPath;
-  exe_path = exe_path.substr(0, exe_path.find_last_of('\\')) + L'\\';
-  delete[] exeFullPath;
 
   if constexpr (IS_DEBUG) {
     AllocConsole();
@@ -50,6 +39,19 @@ int WINAPI WinMain(_In_ const HINSTANCE hInstance,
     wcout << L"wcout 测试\n";
   }
 
+  // 获取程序运行路径
+  const auto exeFullPath = new wchar_t[MAXWORD];
+  GetModuleFileName(nullptr, exeFullPath, MAXWORD);
+  exe_path = exeFullPath;
+  exe_path = exe_path.substr(0, exe_path.find_last_of('\\')) + L'\\';
+  delete[] exeFullPath;
+  wcout << "exe_path=" << exe_path << "\n";
+
+  const HWND hdlg = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG_CONFIG), GetDesktopWindow(), ProcConfig);
+
+  if (!hdlg)
+    return 0;
+
   ShowWindow(hdlg, SW_SHOW);
 
   MSG msg;
@@ -66,9 +68,12 @@ INT_PTR CALLBACK ProcConfig(const HWND hDlg, const UINT msg, const WPARAM wParam
     HANDLE_MSG(hDlg, WM_INITDIALOG, Cls_OnInitDialog);
     HANDLE_MSG(hDlg, WM_SYSCOMMAND, Cls_OnSysCommand);
     HANDLE_MSG(hDlg, WM_COMMAND, Cls_OnCommand);
-  default:
-    return FALSE;
+  case WM_NOTIFY:
+    Cls_OnNotify(hDlg, msg, wParam, lParam);
+    break;
+  default:;
   }
+  return FALSE;
 }
 
 BOOL Cls_OnInitDialog(const HWND hwnd, HWND hwndFocus, LPARAM lParam) {
@@ -121,17 +126,24 @@ BOOL Cls_OnInitDialog(const HWND hwnd, HWND hwndFocus, LPARAM lParam) {
   column.iSubItem = 3;//子项索引
   ListView_InsertColumn(hListview, 3, &column);
 
-  column.pszText = (LPWSTR)L"大小"; // 列标题
-  column.cx = 120;//列宽
+  column.pszText = (LPWSTR)L"覆盖"; // 列标题
+  column.cx = 40;//列宽
   column.iSubItem = 4;//子项索引
   ListView_InsertColumn(hListview, 4, &column);
-  column.pszText = (LPWSTR)L"CRC32"; // 列标题
-  column.cx = 80;//列宽
+
+  column.pszText = (LPWSTR)L"大小"; // 列标题
+  column.cx = 120;//列宽
   column.iSubItem = 5;//子项索引
   ListView_InsertColumn(hListview, 5, &column);
 
+  column.pszText = (LPWSTR)L"CRC32"; // 列标题
+  column.cx = 80;//列宽
+  column.iSubItem = 6;//子项索引
+  ListView_InsertColumn(hListview, 6, &column);
+
   // 如果存在config.cfg则自动加载
-  if (_waccess_s(L"config.cfg", 0) == 0)
+  const string config_path = unicode2utf8(exe_path) + "config.cfg";
+  if (_access_s(config_path.c_str(), 0) == 0)
     PostMessage(hwnd, WM_COMMAND, IDC_BUTTON_LOAD, 0);
 
   return TRUE;
@@ -228,14 +240,18 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
         row.iItem = item_count;
         row.iSubItem = 3;
         ListView_SetItem(hList, &row);
-        wstring tmp = std::to_wstring(dwSize);
-        row.pszText = tmp.data();
+        row.pszText = (LPWSTR)L"1";
         row.iItem = item_count;
         row.iSubItem = 4;
         ListView_SetItem(hList, &row);
-        row.pszText = crc32.data();
+        wstring tmp = std::to_wstring(dwSize);
+        row.pszText = tmp.data();
         row.iItem = item_count;
         row.iSubItem = 5;
+        ListView_SetItem(hList, &row);
+        row.pszText = crc32.data();
+        row.iItem = item_count;
+        row.iSubItem = 6;
         ListView_SetItem(hList, &row);
       }
       else {
@@ -307,14 +323,18 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
           row.iItem = item_count;
           row.iSubItem = 3;
           ListView_SetItem(hList, &row);
-          wstring tmp = std::to_wstring(dwSize);
-          row.pszText = tmp.data();
+          row.pszText = (LPWSTR)L"1";
           row.iItem = item_count;
           row.iSubItem = 4;
           ListView_SetItem(hList, &row);
-          row.pszText = crc32.data();
+          wstring tmp = std::to_wstring(dwSize);
+          row.pszText = tmp.data();
           row.iItem = item_count;
           row.iSubItem = 5;
+          ListView_SetItem(hList, &row);
+          row.pszText = crc32.data();
+          row.iItem = item_count;
+          row.iSubItem = 6;
           ListView_SetItem(hList, &row);
 
           delete[] pFile;
@@ -370,25 +390,26 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     Edit_GetText(GetDlgItem(hwnd, IDC_EDIT_URL), update_url.data(), length);
     xini_file["config"]["url"] = unicode2ansi(update_url).c_str();
 
-    // 保存listview内容，只保存相对路径、执行、解压
+    // 保存listview内容，只保存相对路径、执行、解压、覆盖
     // 先获取数量并写入
     int item_count = ListView_GetItemCount(hList);
     xini_file["config"]["count"] = item_count;
     auto path = new wchar_t[MAXWORD];
-    wchar_t exec[2]{};
-    wchar_t unzip[2]{};
+    wchar_t exec[2]{}, unzip[2]{}, overwrite[2]{};
     for (int i = 0; i < item_count; i++) {
       string key("file" + to_string(i));
 
       ListView_GetItemText(hList, i, 1, path, MAXWORD);
       ListView_GetItemText(hList, i, 2, exec, 2);
       ListView_GetItemText(hList, i, 3, unzip, 2);
+      ListView_GetItemText(hList, i, 4, overwrite, 2);
 
       xini_file[key]["path"] = unicode2ansi(path).c_str();
       //xini_file[key]["exec"] = std::wcstol(exec, nullptr, 10);
       //xini_file[key]["unzip"] = std::wcstol(unzip, nullptr, 10);
       xini_file[key]["exec"] = unicode2ansi(exec).c_str();
       xini_file[key]["unzip"] = unicode2ansi(unzip).c_str();
+      xini_file[key]["overwrite"] = unicode2ansi(overwrite).c_str();
     }
     delete[] path;
 
@@ -396,13 +417,14 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
   }
 
   if (id == IDC_BUTTON_LOAD) {
+    string config_path = unicode2utf8(exe_path) + "config.cfg";
     // 如果不存在config.cfg则提示并退出
-    if (_waccess_s(L"config.cfg", 0) != 0) {
+    if (_access_s(config_path.c_str(), 0) != 0) {
       MessageBox(hwnd, L"程序目录不存在config.cfg文件，无法读取配置", nullptr, MB_ICONERROR | MB_OK);
       return;
     }
 
-    xini_file_t xini_file("config.cfg");
+    xini_file_t xini_file(config_path);
     wstring wstr(L"abcde");
     update_path = ansi2unicode((const char*)xini_file["config"]["dir"]);
     update_url = ansi2unicode((const char*)xini_file["config"]["url"]);
@@ -424,11 +446,13 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       wstring value1(ansi2unicode((const char*)xini_file[key]["path"]));
       wstring value2(ansi2unicode((const char*)xini_file[key]["exec"]));
       wstring value3(ansi2unicode((const char*)xini_file[key]["unzip"]));
+      wstring value4(ansi2unicode((const char*)xini_file[key]["overwrite"]));
 
       if constexpr (IS_DEBUG) {
         wcout << "path=" << value1;
         wcout << "\texec=" << value2;
-        wcout << "\tunzip=" << value3 << "\n";
+        wcout << "\tunzip=" << value3;
+        wcout << "\toverwrite=" << value4 << "\n";
       }
 
       const HANDLE hFile = CreateFile((update_path + value1).data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -475,14 +499,18 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       row.iItem = item_count;
       row.iSubItem = 3;
       ListView_SetItem(hList, &row);
-      wstring tmp = std::to_wstring(dwSize);
-      row.pszText = tmp.data();
+      row.pszText = value4.data();
       row.iItem = item_count;
       row.iSubItem = 4;
       ListView_SetItem(hList, &row);
-      row.pszText = crc32.data();
+      wstring tmp = std::to_wstring(dwSize);
+      row.pszText = tmp.data();
       row.iItem = item_count;
       row.iSubItem = 5;
+      ListView_SetItem(hList, &row);
+      row.pszText = crc32.data();
+      row.iItem = item_count;
+      row.iSubItem = 6;
       ListView_SetItem(hList, &row);
     }
   }
@@ -527,6 +555,28 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       }
       else {
         ListView_SetItemText(hList, i, 3, (LPWSTR)L"");
+      }
+    }
+  }
+
+  if (id == IDC_CHECK_OVERWRITE) {
+    vector<int> indexes;
+    int iPos = ListView_GetNextItem(hList, -1, LVNI_SELECTED); // Get the first selected item
+    // 先把所有选择的项保存到vector
+    while (iPos != -1) {
+      indexes.emplace_back(iPos);
+      iPos = ListView_GetNextItem(hList, iPos, LVNI_SELECTED);
+    }
+
+    wchar_t exec[2]{};
+    for (const auto& i : indexes) {
+      ListView_GetItemText(hList, i, 4, exec, 2);
+      // 如果是空
+      if (wcscmp(exec, L"") == 0) {
+        ListView_SetItemText(hList, i, 4, (LPWSTR)L"1");
+      }
+      else {
+        ListView_SetItemText(hList, i, 4, (LPWSTR)L"");
       }
     }
   }
@@ -591,11 +641,17 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
 
         ListView_GetItemText(hList, i, 4, buf, MAXWORD);
         strtmp = unicode2utf8(buf);
+        XMLElement* overwrite = doc.NewElement("overwrite");
+        unzip->InsertEndChild(doc.NewText(strtmp.data()));
+        file->InsertEndChild(overwrite);
+
+        ListView_GetItemText(hList, i, 5, buf, MAXWORD);
+        strtmp = unicode2utf8(buf);
         XMLElement* size = doc.NewElement("size");
         size->InsertEndChild(doc.NewText(strtmp.data()));
         file->InsertEndChild(size);
 
-        ListView_GetItemText(hList, i, 5, buf, MAXWORD);
+        ListView_GetItemText(hList, i, 6, buf, MAXWORD);
         strtmp = unicode2utf8(buf);
         XMLElement* CRC32 = doc.NewElement("CRC32");
         CRC32->InsertEndChild(doc.NewText(strtmp.data()));
@@ -603,6 +659,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
 
         filelist->InsertEndChild(file);
       }
+      delete[] buf;
 
       // filelist插入到root
       root->InsertEndChild(filelist);
@@ -623,5 +680,41 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     }
     else
       MessageBox(hwnd, L"生成xml完成，保存在程序目录的update.xml文件", nullptr, MB_ICONINFORMATION | MB_OK);
+  }
+}
+
+void Cls_OnNotify(HWND hDlg, UINT message, WPARAM wParam, const LPARAM lParam) {
+  const auto hwnd = ((LPNMHDR)lParam)->hwndFrom;
+  const auto msg = ((LPNMHDR)lParam)->code;
+  const auto id = ((LPNMHDR)lParam)->idFrom;
+  if (id == IDC_LIST_FILES) {
+    if (msg == NM_CLICK) {
+      const auto lpnmitem = (LPNMITEMACTIVATE)lParam;
+      const auto buf = new wchar_t[2];
+
+      // 获取执行、解压、覆盖列的状态，如果是1，则打钩
+      // 获取执行列
+      ListView_GetItemText(hwnd, lpnmitem->iItem, 2, buf, 2);
+      if (std::wcscmp(buf, L"1") == 0)
+        Button_SetCheck(GetDlgItem(hDlg, IDC_CHECK_EXEC), BST_CHECKED);
+      else
+        Button_SetCheck(GetDlgItem(hDlg, IDC_CHECK_EXEC), BST_UNCHECKED);
+
+      // 获取解压列
+      ListView_GetItemText(hwnd, lpnmitem->iItem, 3, buf, 2);
+      if (std::wcscmp(buf, L"1") == 0)
+        Button_SetCheck(GetDlgItem(hDlg, IDC_CHECK_UNZIP), BST_CHECKED);
+      else
+        Button_SetCheck(GetDlgItem(hDlg, IDC_CHECK_UNZIP), BST_UNCHECKED);
+
+      // 获取覆盖列
+      ListView_GetItemText(hwnd, lpnmitem->iItem, 4, buf, 2);
+      if (std::wcscmp(buf, L"1") == 0)
+        Button_SetCheck(GetDlgItem(hDlg, IDC_CHECK_OVERWRITE), BST_CHECKED);
+      else
+        Button_SetCheck(GetDlgItem(hDlg, IDC_CHECK_OVERWRITE), BST_UNCHECKED);
+
+      delete[] buf;
+    }
   }
 }
