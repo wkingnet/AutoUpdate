@@ -206,3 +206,35 @@ T subreplace(const T& resource_str, const T& sub_str, const T& new_str) {
   }
   return dst_str;
 }
+
+inline void remove_allfiles(const wstring& wstrDir) {
+  if (wstrDir.empty()) {
+    return;
+  }
+  WIN32_FIND_DATA findData;
+  const wstring wstrTempDir = wstrDir + L"\\*";
+  const HANDLE hFind = FindFirstFile(wstrTempDir.c_str(), &findData);
+  if (hFind == INVALID_HANDLE_VALUE) {
+    return;
+  }
+  do {
+    // 忽略"."和".."两个结果
+    if (wcscmp(findData.cFileName, L".") == 0 || wcscmp(findData.cFileName, L"..") == 0) {
+      continue;
+    }
+    wstring wstrFileName;
+    wstrFileName.assign(wstrDir);
+    wstrFileName.append(L"\\");
+    wstrFileName.append(findData.cFileName);
+    if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)// 是否是目录
+    {
+      remove_allfiles(wstrFileName);
+    }
+    else {
+      DeleteFile(wstrFileName.c_str());
+    }
+  }
+  while (FindNextFile(hFind, &findData));
+  FindClose(hFind);
+  RemoveDirectory(wstrDir.c_str());
+}

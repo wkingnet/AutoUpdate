@@ -5,8 +5,12 @@
 
 using namespace std;
 
+// 定义更新临时目录的目录名
+constexpr auto UPDATE_DIR = _T("update");
+
 HWND g_hDialogUpdater;
 wstring exe_path; // 程序运行路径 末尾有"\"
+wstring update_path; // 程序操作的临时存放更新文件的目录 末尾有"\"
 tinyxml2::XMLDocument xmldoc; // 在线xml对象
 wstring update_time; // 在线xml文件的更新时间
 wstring update_url; // 在线xml文件的更新URL
@@ -56,6 +60,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
   exe_path = exe_path.substr(0, exe_path.find_last_of('\\')) + L'\\';
   delete[] exeFullPath;
   wcout << "exe_path=" << exe_path << "\n";
+  update_path = exe_path + UPDATE_DIR + _T("\\");
 
   // 获取命令行参数
   // https://blog.csdn.net/ypist/article/details/8138310
@@ -147,7 +152,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
   // 初始化libcurl
   if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
     cerr << "init libcurl failed.\n";
-    MessageBox(nullptr, L"libcurl初始化失败，程序退出", L"自动更新", MB_ICONERROR | MB_OK);
+    MessageBox(g_hDialogUpdater, L"libcurl初始化失败，程序退出", L"自动更新", MB_ICONERROR | MB_OK);
     return 0;
   }
 
@@ -284,7 +289,12 @@ void Cls_OnSysCommand(HWND hwnd, const UINT cmd, int x, int y) {
 
 void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify) {
   if (id == IDC_BUTTON_START) {
+    // 禁用开始更新按钮
     Button_Enable(GetDlgItem(hwnd, IDC_BUTTON_START), FALSE);
+
+    // 如果没有更新目录则新建
+    if (_waccess_s(update_path.data(), 0) == 2)
+      CreateDirectory(update_path.data(), nullptr);
 
     thread t(start_update, GetDlgItem(hwnd, IDC_LISTVIEW), vecXmlfiles);
 
@@ -305,7 +315,7 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
   // 初始化变量和设置
   unsigned long long total_size{};  // 所有要下载的文件总大小，用于计算剩余时间
   FILE* fp{};
-  char errbuf[CURL_ERROR_SIZE];
+  char errbuf[CURL_ERROR_SIZE]; // 接收curl错误信息的buffer
   curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);  //设置错误缓冲区
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);  // 不验证证书
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, FALSE);  // 不验证POST
@@ -321,6 +331,7 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
   // 遍历
   for (size_t i = 0; i < xml_files.size(); i++) {
     wstring filepath(exe_path + xml_files[i].path); // 文件路径
+    wstring filepath_update(update_path + xml_files[i].path); // 文件临时更新路径
     string urlpath(unicode2utf8(update_url + xml_files[i].path)); // URL路径
     urlpath = subreplace(urlpath, string("\\"), string("/")); // 转换URL中的\为/
     wcout << filepath;
@@ -331,25 +342,29 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &clientp);
     total_size -= xml_files[i].size;
 
+    // 如果是Updater.exe进程自己则跳过
+    wchar_t processFullName[_MAX_PATH]{};
+    GetModuleFileName(nullptr, processFullName, _MAX_PATH); //进程完整路径
+    if (processFullName == exe_path + xml_files[i].path) {
+      cout << " 更新进程自身，跳过\n";
+      ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
+      continue;
+    }
+
     // 如果相对文件路径包括目录则新建目录
     vector<wstring> split = split_string(xml_files[i].path, LR"(\)");
     // 大于1说明有分割，遍历且排除最后一个元素(也就是文件名)
     if (split.size() > 1) {
       wstring path(exe_path);
+      wstring path1(update_path); // 给临时更新目录也新建
       for (auto it = split.begin(); it != split.end() - 1; ++it) {
         path += *it + LR"(\)";
         if (_waccess_s(path.data(), 0) == 2)
           CreateDirectory(path.data(), nullptr);
+        path1 += *it + LR"(\)";
+        if (_waccess_s(path1.data(), 0) == 2)
+          CreateDirectory(path1.data(), nullptr);
       }
-    }
-
-    // 如果是进程自己则跳过
-    wchar_t processFullName[_MAX_PATH]{};
-    GetModuleFileName(nullptr, processFullName, _MAX_PATH); //进程完整路径
-    if (processFullName == exe_path + xml_files[i].path) {
-      cout << " 跳过\n";
-      ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
-      continue;
     }
 
     /* set the error buffer as empty before performing a request */
@@ -359,13 +374,12 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     if (_waccess_s(filepath.data(), 0) == 0) {
       cout << " 文件存在";
 
-      // 判断xml中该文件的overwrite属性，如果是1则覆盖，0则跳过
+      // 判断xml中该文件的overwrite属性，如果是1则覆盖更新，0则跳过
       if (!xml_files[i].overwrite) {
         cout << " 不覆盖，跳过\n";
         ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
         continue;
       }
-
 
       // 获取文件大小以及CRC32
       // https://www.cnblogs.com/LyShark/p/13656473.html
@@ -390,6 +404,7 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
         delete[] pFile;
       }
       else {
+        ListView_SetItemText(hListview, i, 1, (LPWSTR)L"失败");
         cout << format("ReadFile failed {}\n", GetLastError());
         delete[] pFile;
         continue;
@@ -397,13 +412,14 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
 
       // 关闭文件句柄，不成功继续下个循环
       if (!CloseHandle(hFile)) {
+        ListView_SetItemText(hListview, i, 1, (LPWSTR)L"失败");
         cout << format("CloseHandle failed {}\n", errno);
         continue;
       }
 
       // 如果校检一致，更新Listview，继续下个循环
       if (crc32 == xml_files[i].CRC32) {
-        wcout << " 无需更新\n";
+        cout << " 无需更新\n";
         ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
         continue;
       }
@@ -414,11 +430,12 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     else
       cout << " 文件不存在";
 
-    // 打开文件，如果成功，则为零；如果失败，则为错误代码。
-    if (_wfopen_s(&fp, filepath.data(), L"wb")) {
+    // 打开临时更新文件，如果成功，则为零；如果失败，则为错误代码。
+    if (_wfopen_s(&fp, filepath_update.data(), L"wb")) {
       char errmsg[200];
       if (!strerror_s(errmsg, 200, errno))  // NOLINT(bugprone-not-null-terminated-result)
-        cout << format("fopen_s failed {}\n", errmsg);
+        cerr << format("fopen_s failed {}\n", errmsg);
+      ListView_SetItemText(hListview, i, 1, (LPWSTR)L"失败");
       continue;
     }
 
@@ -433,6 +450,14 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     // https://curl.se/libcurl/c/CURLOPT_ERRORBUFFER.html
     // 成功返回0；失败返回非零，且错误缓冲区中将显示可读错误消息。if the request did not complete correctly, show the error information. if no detailed error information was written to errbuf show the more generic information from curl_easy_strerror instead.
     const CURLcode res = curl_easy_perform(curl);
+
+    // 关闭文件指针。如果已成功关闭流，则 fclose 返回 0。 _fcloseall 返回已关闭流的总数。 这两个函数都返回 EOF，表示出现错误。
+    if (fclose(fp)) {
+      char errmsg[200];
+      if (!strerror_s(errmsg, 200, errno))  // NOLINT(bugprone-not-null-terminated-result)
+        cerr << format("fclose failed {}\n", errmsg);
+    }
+
     if (res != CURLE_OK) {
       cout << " 更新失败\n";
       cerr << "出错URL=";
@@ -443,29 +468,61 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
         ignore = fprintf(stderr, "%s%s", errbuf, errbuf[len - 1] != '\n' ? "\n" : "");
       else
         ignore = fprintf(stderr, "%s\n", curl_easy_strerror(res));
+      ListView_SetItemText(hListview, i, 1, (LPWSTR)L"失败");
     }
     else {
-      cout << " 更新成功\n";
-      ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
-    }
+      cout << " 更新成功";
 
+      // 删除原文件
+      if (!DeleteFile(filepath.data())) {
+        //cerr << " 删除文件失败\n失败原因:";
+        //LastError();
+        //ListView_SetItemText(hListview, i, 1, (LPWSTR)L"失败");
+      }
 
-    // 关闭文件指针。如果已成功关闭流，则 fclose 返回 0。 _fcloseall 返回已关闭流的总数。 这两个函数都返回 EOF，表示出现错误。
-    if (fclose(fp)) {
-      char errmsg[200];
-      if (!strerror_s(errmsg, 200, errno))  // NOLINT(bugprone-not-null-terminated-result)
-        cout << format("fclose failed {}\n", errmsg);
+      // 移动更新临时文件
+      if (!MoveFile(filepath_update.data(), filepath.data())) {
+        cerr << " 移动文件失败\n失败原因:";
+        LastError();
+        ListView_SetItemText(hListview, i, 1, (LPWSTR)L"失败");
+      }
+      else {
+        cout << " 移动成功\n";
+        ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
+      }
     }
   }
+
   // 清除easy interface
   curl_easy_cleanup(curl);
 
+  // 设置下载速度显示为0
   SetDlgItemInt(g_hDialogUpdater, IDC_STATIC_DOWNSPEED, 0, false);
 
-  cout << "更新完成\n";
+  // 递归删除更新目录
+  remove_allfiles(update_path);
 
-  MessageBox(nullptr, L"更新完成，程序退出", L"自动更新", MB_ICONINFORMATION | MB_OK);
-  exit(0);  // NOLINT(concurrency-mt-unsafe)
+  // 遍历Listview所有下载进度列，判断文本是否都是100%，全为100%则更新完成，否则更新失败
+  auto buffer = new wchar_t[100];
+  bool all_done = true;
+  for (int i = 0; i < ListView_GetItemCount(hListview); i++) {
+    ListView_GetItemText(hListview, i, 1, buffer, 100);
+    if (std::wcscmp(buffer, L"100%") != 0)
+      all_done = false;
+  }
+  delete[] buffer;
+
+  if (all_done) {
+    cout << "更新完成\n";
+    MessageBox(g_hDialogUpdater, L"更新完成，程序退出", L"自动更新", MB_ICONINFORMATION | MB_OK);
+    exit(0);  // NOLINT(concurrency-mt-unsafe)
+  }
+  else {
+    cout << "更新失败\n";
+    MessageBox(g_hDialogUpdater, L"更新失败，请关闭主程序或者杀毒软件或者重启计算机后重试", L"自动更新", MB_ICONERROR | MB_OK);
+    // 启用开始更新按钮
+    Button_Enable(GetDlgItem(g_hDialogUpdater, IDC_BUTTON_START), TRUE);
+  }
 }
 
 size_t proc_libcurl_write(const void* buffer, const size_t size, const size_t nmemb, void* user_p) {

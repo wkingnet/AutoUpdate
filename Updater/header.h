@@ -68,6 +68,7 @@ void Cls_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
  * \param hListview Listview句柄
  * \param xml_files xml解析后的数据vector
  * \return 下载完成返回true，失败返回false
+ * \note 函数流程是：解析出来的xml文件内容，遍历读取每个文件的CRC32，判断是否需要更新，如果需要更新则下载云端文件到临时目录，下载完成后替换。最后判断所有文件的更新结果。
  */
 void start_update(HWND hListview, const vector<XML_FILE>& xml_files);
 
