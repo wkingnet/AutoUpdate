@@ -696,7 +696,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
   }
 }
 
-void Cls_OnNotify(HWND hDlg, UINT message, WPARAM wParam, const LPARAM lParam) {
+void Cls_OnNotify(const HWND hDlg, UINT message, WPARAM wParam, const LPARAM lParam) {
   const auto hwnd = ((LPNMHDR)lParam)->hwndFrom;
   const auto msg = ((LPNMHDR)lParam)->code;
   const auto id = ((LPNMHDR)lParam)->idFrom;

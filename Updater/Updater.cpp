@@ -97,11 +97,11 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
       InternetCloseHandle(hRequest);
     }
     else
-      wcout << format(L"InternetOpenUrl={} 创建失败\n", update_url);
+      wcerr << format(L"InternetOpenUrl={} 创建失败\n", update_url);
     InternetCloseHandle(hSession);
   }
   else
-    wcout << format(L"InternetOpen(WinInet) 创建失败\n");
+    wcerr << format(L"InternetOpen(WinInet) 创建失败\n");
 
   if (xmldoc.ErrorID()) {
     /*
@@ -132,15 +132,17 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     };
     */
     const wstring wstr(L"XML文件解析失败，程序退出。错误ID=" + to_wstring(xmldoc.ErrorID()));
-    wcout << wstr;
+    wcerr << wstr;
     MessageBox(nullptr, wstr.data(), L"自动更新", MB_ICONERROR | MB_OK);
     return 0;
   }
 
   // 创建对话框，失败则退出
-  if (g_hDialogUpdater = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG_UPDATER), GetDesktopWindow(), proc_updater); !g_hDialogUpdater)
+  g_hDialogUpdater = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG_UPDATER), GetDesktopWindow(), proc_updater);
+  if (!g_hDialogUpdater)
     return 0;
-  ShowWindow(g_hDialogUpdater, SW_SHOW);
+  else
+    ShowWindow(g_hDialogUpdater, SW_SHOW);
 
   // 初始化libcurl
   if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
@@ -224,16 +226,37 @@ BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) {
   // 解析xml对象filelist元素，填充listview
   for (const XMLElement* cur = xml_filelist->FirstChildElement("file"); cur; cur = cur->NextSiblingElement()) {
     XML_FILE xml_file{};
-    if (cur->FirstChildElement("path")->GetText())
-      xml_file.path = utf82unicode(cur->FirstChildElement("path")->GetText());
-    if (cur->FirstChildElement("exec")->GetText())
-      xml_file.exec = utf82unicode(cur->FirstChildElement("exec")->GetText());
-    if (cur->FirstChildElement("unzip")->GetText())
-      xml_file.unzip = utf82unicode(cur->FirstChildElement("unzip")->GetText());
-    if (cur->FirstChildElement("size")->GetText())
-      xml_file.size = utf82unicode(cur->FirstChildElement("size")->GetText());
-    if (cur->FirstChildElement("CRC32")->GetText())
-      xml_file.CRC32 = utf82unicode(cur->FirstChildElement("CRC32")->GetText());
+    const XMLElement* element;
+    element = cur->FirstChildElement("path");
+    if (element) {
+      if (element->GetText())
+        xml_file.path = utf82unicode(cur->FirstChildElement("path")->GetText());
+    }
+    element = cur->FirstChildElement("exec");
+    if (element) {
+      if (element->GetText())
+        xml_file.exec = utf82unicode(cur->FirstChildElement("exec")->GetText());
+    }
+    element = cur->FirstChildElement("unzip");
+    if (element) {
+      if (element->GetText())
+        xml_file.unzip = utf82unicode(cur->FirstChildElement("unzip")->GetText());
+    }
+    element = cur->FirstChildElement("overwrite");
+    if (element) {
+      if (element->GetText())
+        cur->FirstChildElement("overwrite")->QueryBoolText(&xml_file.overwrite);
+    }
+    element = cur->FirstChildElement("size");
+    if (element) {
+      if (element->GetText())
+        xml_file.size = cur->FirstChildElement("size")->Unsigned64Text();
+    }
+    element = cur->FirstChildElement("CRC32");
+    if (element) {
+      if (element->GetText())
+        xml_file.CRC32 = utf82unicode(cur->FirstChildElement("CRC32")->GetText());
+    }
     vecXmlfiles.emplace_back(xml_file);
 
     // 插入行
@@ -244,6 +267,7 @@ BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) {
     row.iItem = item_count;
     row.iSubItem = 0;
     ListView_InsertItem(hList, &row);
+
     row.pszText = (LPWSTR)L"";  // 下载百分比开始都是空
     row.iItem = item_count;
     row.iSubItem = 1;
@@ -252,13 +276,13 @@ BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) {
   return true;
 }
 
-void Cls_OnSysCommand(HWND hwnd, UINT cmd, int x, int y) {
+void Cls_OnSysCommand(HWND hwnd, const UINT cmd, int x, int y) {
   if (cmd == SC_CLOSE) {
     PostQuitMessage(0);//退出
   }
 }
 
-void Cls_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify) {
+void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify) {
   if (id == IDC_BUTTON_START) {
     thread t(start_update, GetDlgItem(hwnd, IDC_LISTVIEW), vecXmlfiles);
 
@@ -290,7 +314,7 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
 
   // 先遍历一遍计算总文件大小
   for (const auto& xml_file : xml_files)
-    total_size += stoull(xml_file.size);
+    total_size += xml_file.size;
 
   // 遍历
   for (size_t i = 0; i < xml_files.size(); i++) {
@@ -303,7 +327,7 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     CURL_XFERINFODATA clientp{ curl, hListview, i, total_size };
     // 设置进度回调函数形参clientp
     curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &clientp);
-    total_size -= stoull(xml_files[i].size);
+    total_size -= xml_files[i].size;
 
     // 如果相对文件路径包括目录则新建目录
     vector<wstring> split = split_string(xml_files[i].path, LR"(\)");
@@ -332,6 +356,15 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     // 先判断文件是否存在，如存在则校检，校验一致跳过不下载。0=存在
     if (_waccess_s(filepath.data(), 0) == 0) {
       cout << " 文件存在";
+
+      // 判断xml中该文件的overwrite属性，如果是1则覆盖，0则跳过
+      if (!xml_files[i].overwrite) {
+        cout << " 不覆盖，跳过\n";
+        ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
+        continue;
+      }
+
+
       // 获取文件大小以及CRC32
       // https://www.cnblogs.com/LyShark/p/13656473.html
       const HANDLE hFile = CreateFile(filepath.data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);

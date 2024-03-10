@@ -52,7 +52,8 @@ struct XML_FILE {
   wstring path;
   wstring exec;
   wstring unzip;
-  wstring size;
+  bool overwrite; // 是否覆盖 0=不覆盖 1=覆盖
+  unsigned long long size;  // 文件大小
   wstring CRC32;
 };
 
