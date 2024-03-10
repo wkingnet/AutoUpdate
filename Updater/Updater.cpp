@@ -284,6 +284,8 @@ void Cls_OnSysCommand(HWND hwnd, const UINT cmd, int x, int y) {
 
 void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify) {
   if (id == IDC_BUTTON_START) {
+    Button_Enable(GetDlgItem(hwnd, IDC_BUTTON_START), FALSE);
+
     thread t(start_update, GetDlgItem(hwnd, IDC_LISTVIEW), vecXmlfiles);
 
     // 分离线程，让线程自己执行，防止主程序卡死
@@ -433,9 +435,10 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     const CURLcode res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
       cout << " 更新失败\n";
-      wcout << update_url + xml_files[i].path << L"\n";
+      cerr << "出错URL=";
+      wcerr << update_url + xml_files[i].path << L"\n";
       const size_t len = strlen(errbuf);
-      ignore = fprintf(stderr, "libcurl: (%d) ", res);
+      ignore = fprintf(stderr, "错误原因: libcurl: (%d) ", res);
       if (len)
         ignore = fprintf(stderr, "%s%s", errbuf, errbuf[len - 1] != '\n' ? "\n" : "");
       else
