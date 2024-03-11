@@ -1,4 +1,15 @@
-﻿#pragma once
+﻿/**
+*****************************************************************************
+*  Copyright (C), 2010-2024, WKING. All rights reserved.
+*
+*  @author  wking
+*  @website http://wkings.blog
+*  @date    输入日期
+*  @version 版本号
+*
+*****************************************************************************
+*/
+#pragma once
 #include <iostream>
 #include <Windows.h>
 #include <wininet.h>
@@ -175,7 +186,6 @@ namespace AutoUpdate {
     else if (notice) {
       MessageBox(hwnd, L"目前已经是最新版本", L"检查更新", MB_ICONINFORMATION | MB_OK);
     }
-
   }
 
   /**
@@ -184,7 +194,7 @@ namespace AutoUpdate {
  * \param update_exe 自动更新程序的文件名，用于启动更新程序。
  * \param xml_url 自动更新config程序生成的xml文件的URL
  * \param notice 无需更新时是否显示结果消息框。true=显示, false=不显示
- * \return thread::id
+ * \return 自动更新线程的线程ID
  */
   inline thread::id AutoUpdate(const HWND hwnd, const wchar_t* update_exe, const wchar_t* xml_url, const bool notice) {
     jthread t(thread_update, hwnd, update_exe, xml_url, notice);
