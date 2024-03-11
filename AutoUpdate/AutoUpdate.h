@@ -197,6 +197,12 @@ namespace AutoUpdate {
  * \return 自动更新线程的线程ID
  */
   inline thread::id AutoUpdate(const HWND hwnd, const wchar_t* update_exe, const wchar_t* xml_url, const bool notice) {
+    wstring wstr(update_exe);
+    wstr += L".update";
+    if (_waccess_s(wstr.data(), 0) == 0) {
+      if (CopyFile(wstr.data(), update_exe, FALSE))
+        DeleteFile(wstr.data());
+    }
     jthread t(thread_update, hwnd, update_exe, xml_url, notice);
     t.detach();
     return t.get_id();
