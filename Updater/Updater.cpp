@@ -216,10 +216,17 @@ BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) {
 
   // 获取config节点
   const XMLElement* xml_config = xml_root->FirstChildElement("config");
-  if (xml_config->FirstChildElement("time")->GetText())
-    update_time = utf82unicode(xml_config->FirstChildElement("time")->GetText());
-  if (xml_config->FirstChildElement("url")->GetText())
-    update_url = utf82unicode(xml_config->FirstChildElement("url")->GetText());
+  const XMLElement* element;
+  element = xml_config->FirstChildElement("time");
+  if (element) {
+    if (element->GetText())
+      update_time = utf82unicode(xml_config->FirstChildElement("time")->GetText());
+  }
+  element = xml_config->FirstChildElement("url");
+  if (element) {
+    if (element->GetText())
+      update_url = utf82unicode(xml_config->FirstChildElement("url")->GetText());
+  }
 
   // 判断根节点下是否有filelist节点
   const XMLElement* xml_filelist = xml_root->FirstChildElement("filelist");
@@ -231,6 +238,7 @@ BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) {
   // 解析xml对象filelist元素，填充listview
   for (const XMLElement* cur = xml_filelist->FirstChildElement("file"); cur; cur = cur->NextSiblingElement()) {
     XML_FILE xml_file{};
+    // ReSharper disable once CppDeclarationHidesLocal
     const XMLElement* element;
     element = cur->FirstChildElement("path");
     if (element) {
@@ -278,6 +286,11 @@ BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) {
     row.iSubItem = 1;
     ListView_SetItem(hList, &row);
   }
+
+  // 如果是release模式，发送开始更新消息以便自动更新
+  if constexpr (!IS_DEBUG)
+    PostMessage(hwnd, WM_COMMAND, IDC_BUTTON_START, 0);
+
   return true;
 }
 
