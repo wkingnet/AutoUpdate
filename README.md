@@ -22,6 +22,8 @@
 
 # 使用
 ## 配置、生成xml
+![config exe](https://github.com/wkingnet/AutoUpdate/assets/57652989/ab5067c5-5e02-461b-b6d6-079d91481b30)
+
 ### 首次运行
 1. 选择更新目录。也即你程序最新版本生成的目录。
 1. 填写更新URL。这个URL是集成到你程序的AutoUpdate模块从什么位置下载更新文件，可与update.xml的URL一致，也可不一致。比如update.xml的URL设定为固定网址http://123.com/update.xml，更新URL可填写为CDN地址，或者填写你自己家的IP地址，从而提高下载速度，或降低带宽费用。
