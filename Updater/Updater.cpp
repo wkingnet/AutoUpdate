@@ -555,6 +555,14 @@ void AutoUpdate::start_update(HWND hListview, const vector<XML_FILE>& xml_files)
   if (all_done) {
     cout << "更新完成\n";
     MessageBox(g_hDialogUpdater, L"更新完成，程序退出", L"自动更新", MB_ICONINFORMATION | MB_OK);
+
+    // 遍历解析的xml数据exec属性，如果为1则执行
+    for (const auto& [path, exec, unzip, overwrite, size, CRC32] : xml_files) {
+      if (std::wcscmp(exec.c_str(), L"1") == 0) {
+        ShellExecute(nullptr, _T("open"), (exe_path + path).data(), nullptr, nullptr, SW_SHOWNORMAL);
+      }
+    }
+
     exit(0);  // NOLINT(concurrency-mt-unsafe)
   }
   else {
