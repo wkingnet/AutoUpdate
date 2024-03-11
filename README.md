@@ -1,3 +1,5 @@
+<center><font size=7>AutoUpdate</font></center>
+
 # 简介
 
 用于windows系统的，可以轻松集成的在线自动更新模块。
