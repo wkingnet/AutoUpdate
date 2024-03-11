@@ -179,14 +179,14 @@ namespace AutoUpdate {
   }
 
   /**
- * \brief 入口函数
- * \param hwnd 父窗口句柄，可为nullptr，用于显示MessageBox
- * \param update_exe 更新程序的程序名。用于启动更新程序。
- * \param xml_url 在线更新的XML数据URL
+ * \brief 自动更新模块的调用函数
+ * \param hwnd 调用更新模块的窗口句柄，可为nullptr，用于显示MessageBox
+ * \param update_exe 自动更新程序的文件名，用于启动更新程序。
+ * \param xml_url 自动更新config程序生成的xml文件的URL
  * \param notice 无需更新时是否显示结果消息框。true=显示, false=不显示
  */
   inline void AutoUpdate(const HWND hwnd, const wchar_t* update_exe, const wchar_t* xml_url, const bool notice) {
     thread t(thread_update, hwnd, update_exe, xml_url, notice);
-    t.join();
+    t.detach();
   }
 }
