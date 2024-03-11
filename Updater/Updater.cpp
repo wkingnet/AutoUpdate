@@ -482,17 +482,21 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
       GetModuleFileName(nullptr, processFullName, _MAX_PATH); //进程完整路径
       if (processFullName == exe_path + xml_files[i].path) {
         cout << " 更新程序自己，移动并改名";
-
         // 重命名
         wstring filepath_new = filepath_update + L".update";
         if (_waccess_s(filepath_update.data(), 0) == 0) {
           if (CopyFile(filepath_update.data(), filepath_new.data(), FALSE))
             DeleteFile(filepath_update.data());
+
+          // 修改要移动的文件名
           filepath_update = filepath_new;
           filepath += L".update";
-          DeleteFile(filepath.data()); // 删除已存在的Updater.exe.update文件
+
+          // 删除已存在的Updater.exe.update文件
+          DeleteFile(filepath.data());
         }
       }
+      // 如果不是更新进程自己
       else {
         // 删除原文件
         if (!DeleteFile(filepath.data())) {
