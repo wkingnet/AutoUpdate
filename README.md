@@ -1,4 +1,4 @@
-<center><font size=7>AutoUpdate</font></center>
+<h1 align="center">AutoUpdate<br><br></h1>
 
 # 简介
 
