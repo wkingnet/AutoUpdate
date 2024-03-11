@@ -1,4 +1,16 @@
-﻿// ReSharper disable CppClangTidyClangDiagnosticExtraSemiStmt
+﻿/**
+*****************************************************************************
+*  Copyright (C), 2010-2024, WKING. All rights reserved.
+*
+*  @author  wking
+*  @website http://wkings.blog
+*  @date    输入日期
+*  @version 版本号
+*
+*****************************************************************************
+*/
+
+// ReSharper disable CppClangTidyClangDiagnosticExtraSemiStmt
 // ReSharper disable CppClangTidyBugproneImplicitWideningOfMultiplicationResult
 #include "header.h"
 #include "resource.h"

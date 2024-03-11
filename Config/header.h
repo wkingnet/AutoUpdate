@@ -1,4 +1,16 @@
-﻿#pragma once
+﻿/**
+*****************************************************************************
+*  Copyright (C), 2010-2024, WKING. All rights reserved.
+*
+*  @author  wking
+*  @website http://wkings.blog
+*  @date    输入日期
+*  @version 版本号
+*
+*****************************************************************************
+*/
+
+#pragma once
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
