@@ -17,7 +17,7 @@
 2. 复制AutoUpdate文件夹内的AutoUpdate.h、tinyxml2.h和tinyxml2.cpp三个文件到你自己的项目。
 3. 复制Updater.exe文件到你项目**生成**的主程序文件夹。
 4. 在你的项目代码`include "AutoUpdate.h"`。
-5. 在需要执行自动更新模块的代码位置加入代码`AutoUpdate::AutoUpdate(nullptr, L"Updater.exe", L"*xml_url*", false);`（*xml_url*请自行替换为在线XML文件的URL）
+5. 在需要执行自动更新模块的代码位置加入代码`AutoUpdate::AutoUpdate(nullptr, L"Updater.exe", L"*xml_url*", true);`（*xml_url*请自行替换为在线XML文件的URL）
 6. 继续看使用部分
 
 # 使用
@@ -49,4 +49,9 @@
 
 
 ## 发布xml
-将生成的xml文件上传到任意http(s)网站或CDN，只需客户端主程序AutoUpdate模块能访问到即可。
+将生成的xml文件上传到http(s)网站或CDN，需要让客户端主程序的AutoUpdate模块能访问到即可。
+
+发布后，用实际xml文件的URL替换代码中的\*xml_url*
+```
+AutoUpdate::AutoUpdate(nullptr, L"Updater.exe", L"*xml_url*", true);
+```
