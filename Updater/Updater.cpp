@@ -355,15 +355,6 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &clientp);
     total_size -= xml_files[i].size;
 
-    // 如果是Updater.exe进程自己则跳过
-    wchar_t processFullName[_MAX_PATH]{};
-    GetModuleFileName(nullptr, processFullName, _MAX_PATH); //进程完整路径
-    if (processFullName == exe_path + xml_files[i].path) {
-      cout << " 更新进程自身，跳过\n";
-      ListView_SetItemText(hListview, i, 1, (LPWSTR)L"100%");
-      continue;
-    }
-
     // 如果相对文件路径包括目录则新建目录
     vector<wstring> split = split_string(xml_files[i].path, LR"(\)");
     // 大于1说明有分割，遍历且排除最后一个元素(也就是文件名)
@@ -486,11 +477,29 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
     else {
       cout << " 更新成功";
 
-      // 删除原文件
-      if (!DeleteFile(filepath.data())) {
-        //cerr << " 删除文件失败\n失败原因:";
-        //LastError();
-        //ListView_SetItemText(hListview, i, 1, (LPWSTR)L"失败");
+      // 如果是Updater.exe进程自己，则移动更新文件到源目录，并改名为Updater.exe.update，之后通过调用主程序AutoUpdate模块来更新
+      wchar_t processFullName[_MAX_PATH]{};
+      GetModuleFileName(nullptr, processFullName, _MAX_PATH); //进程完整路径
+      if (processFullName == exe_path + xml_files[i].path) {
+        cout << " 更新程序自己，移动并改名";
+
+        // 重命名
+        wstring filepath_new = filepath_update + L".update";
+        if (_waccess_s(filepath_update.data(), 0) == 0) {
+          if (CopyFile(filepath_update.data(), filepath_new.data(), FALSE))
+            DeleteFile(filepath_update.data());
+          filepath_update = filepath_new;
+          filepath += L".update";
+          DeleteFile(filepath.data()); // 删除已存在的Updater.exe.update文件
+        }
+      }
+      else {
+        // 删除原文件
+        if (!DeleteFile(filepath.data())) {
+          //cerr << " 删除文件失败\n失败原因:";
+          //LastError();
+          //ListView_SetItemText(hListview, i, 1, (LPWSTR)L"失败");
+        }
       }
 
       // 移动更新临时文件
