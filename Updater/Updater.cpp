@@ -321,7 +321,7 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
     if (_waccess_s(update_path.data(), 0) == 2)
       CreateDirectory(update_path.data(), nullptr);
 
-    thread t(start_update, GetDlgItem(hwnd, IDC_LISTVIEW), vecXmlfiles);
+    thread t(AutoUpdate::start_update, GetDlgItem(hwnd, IDC_LISTVIEW), vecXmlfiles);
 
     // 分离线程，让线程自己执行，防止主程序卡死
     t.detach();
@@ -329,7 +329,9 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
 }
 
 
-void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
+void AutoUpdate::start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
+  using namespace AutoUpdate;
+
   // 创建curl easy interface
   CURL* curl = curl_easy_init();
   if (curl == nullptr) {
@@ -563,12 +565,12 @@ void start_update(HWND hListview, const vector<XML_FILE>& xml_files) {
   }
 }
 
-size_t proc_libcurl_write(const void* buffer, const size_t size, const size_t nmemb, void* user_p) {
+size_t AutoUpdate::proc_libcurl_write(const void* buffer, const size_t size, const size_t nmemb, void* user_p) {
   const auto fp = (FILE*)user_p;
   return fwrite(buffer, size, nmemb, fp);
 }
 
-size_t proc_libcurl_progress(void* clientp, const curl_off_t dltotal, const curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
+size_t AutoUpdate::proc_libcurl_progress(void* clientp, const curl_off_t dltotal, const curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
   // https://blog.csdn.net/ixiaochouyu/article/details/47301005
 
   const auto arg1 = static_cast<CURL_XFERINFODATA*>(clientp);

@@ -70,38 +70,39 @@ struct XML_FILE {
 };
 
 INT_PTR CALLBACK proc_updater(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-
 BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam);
 void Cls_OnSysCommand(HWND hwnd, UINT cmd, int x, int y);
 void Cls_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
 
-/**
+namespace AutoUpdate {
+  /**
  * \brief 为防止对话框界面失去响应，通过新建线程执行此函数执行下载更新过程
  * \param hListview Listview句柄
  * \param xml_files xml解析后的数据vector
  * \return 下载完成返回true，失败返回false
  * \note 函数流程是：解析出来的xml文件内容，遍历读取每个文件的CRC32，判断是否需要更新，如果需要更新则下载云端文件到临时目录，下载完成后替换。最后判断所有文件的更新结果。
  */
-void start_update(HWND hListview, const vector<XML_FILE>& xml_files);
+  void start_update(HWND hListview, const vector<XML_FILE>& xml_files);
 
-/**
- * \brief libcurl接收到数据时的回调函数
- * \param buffer 接收到的数据所在缓冲区
- * \param size 数据长度
- * \param nmemb 数据片数量
- * \param user_p 用户自定义指针
- * \return 获取的数据长度
- */
-size_t proc_libcurl_write(const void* buffer, size_t size, size_t nmemb, void* user_p);
+  /**
+   * \brief libcurl接收到数据时的回调函数
+   * \param buffer 接收到的数据所在缓冲区
+   * \param size 数据长度
+   * \param nmemb 数据片数量
+   * \param user_p 用户自定义指针
+   * \return 获取的数据长度
+   */
+  size_t proc_libcurl_write(const void* buffer, size_t size, size_t nmemb, void* user_p);
 
-/**
- * \brief libcurl接收到数据时的进度回调函数
- * \param clientp 用户自定义参数，通过设置CURLOPT_XFERINFODATA属性来传递
- * \param dltotal 需要下载的总字节数
- * \param dlnow 已经下载的字节数
- * \param ultotal 将要上传的字节数
- * \param ulnow 已经上传的字节数
- * \note 如果仅下载，ultotal和ulnow是0；如果仅上传，dltotal和dlnow是0。
- * \return 0=正常；非0值将会中断传输，错误代码是 CURLE_ABORTED_BY_CALLBACK
- */
-size_t proc_libcurl_progress(void* clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+  /**
+   * \brief libcurl接收到数据时的进度回调函数
+   * \param clientp 用户自定义参数，通过设置CURLOPT_XFERINFODATA属性来传递
+   * \param dltotal 需要下载的总字节数
+   * \param dlnow 已经下载的字节数
+   * \param ultotal 将要上传的字节数
+   * \param ulnow 已经上传的字节数
+   * \note 如果仅下载，ultotal和ulnow是0；如果仅上传，dltotal和dlnow是0。
+   * \return 0=正常；非0值将会中断传输，错误代码是 CURLE_ABORTED_BY_CALLBACK
+   */
+  size_t proc_libcurl_progress(void* clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+}
