@@ -230,7 +230,8 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
 
         // 创建文件大小的字节指针，将文件读入指针，然后计算CRC32
         const auto pFile = new BYTE[dwSize];
-        ignore = ReadFile(hFile, pFile, dwSize, nullptr, nullptr);
+        DWORD NumberOfBytesRead{};
+        ignore = ReadFile(hFile, pFile, dwSize, &NumberOfBytesRead, nullptr);
         wstring crc32 = calc_crc32(pFile, dwSize);
 
         int item_count = ListView_GetItemCount(hList);
@@ -307,7 +308,8 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
 
           // 创建文件大小的字节指针，将文件读入指针，然后计算CRC32
           const auto pFile = new BYTE[dwSize];
-          ignore = ReadFile(hFile, pFile, dwSize, nullptr, nullptr);
+          DWORD NumberOfBytesRead{};
+          ignore = ReadFile(hFile, pFile, dwSize, &NumberOfBytesRead, nullptr);
           wstring crc32 = calc_crc32(pFile, dwSize);
 
           // 如果文件路径中包括update_path，则把文件路径中的update_path部分替换为空
@@ -481,7 +483,8 @@ void Cls_OnCommand(const HWND hwnd, const int id, HWND hwndCtl, UINT codeNotify)
       // 创建文件大小的字节指针，将文件读入指针，然后计算CRC32
       wstring crc32;
       const auto pFile = new BYTE[dwSize];
-      if (ReadFile(hFile, pFile, dwSize, nullptr, nullptr)) {
+      DWORD NumberOfBytesRead{};
+      if (ReadFile(hFile, pFile, dwSize, &NumberOfBytesRead, nullptr)) {
         crc32 = calc_crc32(pFile, dwSize);
         delete[] pFile;
       }
