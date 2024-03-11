@@ -24,9 +24,9 @@ namespace AutoUpdate {
   };
 
   inline std::wstring utf82unicode(const std::string& str) {
-    const int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), nullptr, 0);
+    const int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.data(), (int)str.size(), nullptr, 0);
     std::wstring wstrTo(size_needed, 0);
-    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+    MultiByteToWideChar(CP_UTF8, 0, str.data(), (int)str.size(), wstrTo.data(), size_needed);
     return wstrTo;
   }
 
@@ -184,9 +184,11 @@ namespace AutoUpdate {
  * \param update_exe 自动更新程序的文件名，用于启动更新程序。
  * \param xml_url 自动更新config程序生成的xml文件的URL
  * \param notice 无需更新时是否显示结果消息框。true=显示, false=不显示
+ * \return thread::id
  */
-  inline void AutoUpdate(const HWND hwnd, const wchar_t* update_exe, const wchar_t* xml_url, const bool notice) {
-    thread t(thread_update, hwnd, update_exe, xml_url, notice);
+  inline thread::id AutoUpdate(const HWND hwnd, const wchar_t* update_exe, const wchar_t* xml_url, const bool notice) {
+    jthread t(thread_update, hwnd, update_exe, xml_url, notice);
     t.detach();
+    return t.get_id();
   }
 }
