@@ -138,6 +138,8 @@ namespace AutoUpdate {
     for (const auto& [path, exec, unzip, overwrite, size, CRC32] : xml_files) {
       wstring filepath(exe_path + path);
       if (_waccess_s(filepath.data(), 0) == 0) {
+        if (!overwrite)
+          continue;
         const HANDLE hFile = CreateFile(filepath.data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
         if (hFile == INVALID_HANDLE_VALUE)
           continue;
