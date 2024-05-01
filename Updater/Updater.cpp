@@ -225,6 +225,8 @@ BOOL Cls_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam) {
 
   // 定义根节点
   const XMLElement* xml_root = xmldoc.RootElement();
+  if (!xml_root)
+    return false;
 
   // 获取config节点
   const XMLElement* xml_config = xml_root->FirstChildElement("config");

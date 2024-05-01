@@ -94,6 +94,9 @@ namespace AutoUpdate {
     if (xmldoc.ErrorID())
       return false;
     const XMLElement* xml_root = xmldoc.RootElement();
+    if (!xml_root) {
+      return false;
+    }
     const XMLElement* xml_filelist = xml_root->FirstChildElement("filelist");
     if (!xml_filelist) {
       return false;
