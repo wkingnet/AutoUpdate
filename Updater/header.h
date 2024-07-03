@@ -24,12 +24,14 @@
 #include <ShlObj_core.h>
 #include <thread>
 #include <cerrno>
+#include <PathCch.h>
 
 #include "utils.h"
 #include "tinyxml2.h"
 
 #define CURL_STATICLIB  // libcurl需要
 #pragma comment(lib, "wininet.lib")
+#pragma comment(lib, "PathCch.lib")
 #pragma comment(lib, "Ws2_32.lib")  // libcurl需要
 #pragma comment(lib, "Wldap32.lib")  // libcurl需要
 #pragma comment(lib, "Crypt32.lib")  // libcurl需要

@@ -66,10 +66,17 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
   }
 
   // 获取程序运行路径
-  const auto exeFullPath = new wchar_t[MAXWORD];
-  GetModuleFileName(nullptr, exeFullPath, MAXWORD);
+  const auto exeFullPath = new wchar_t[2000];
+  if (const size_t nSize = GetModuleFileName(nullptr, exeFullPath, 2000)) {
+    PathCchRemoveFileSpec(exeFullPath, nSize); // 删掉最后的文件名，只保留路径
+  }
+  else {
+    MessageBox(nullptr, TEXT("获取程序所在路径失败，程序退出"), TEXT("AutoUpdater"), MB_OK | MB_ICONERROR);
+    delete[] exeFullPath;
+    return 0;
+  }
   exe_path = exeFullPath;
-  exe_path = exe_path.substr(0, exe_path.find_last_of('\\')) + L'\\';
+  exe_path += TEXT("\\"); // 末尾增加‘\’
   delete[] exeFullPath;
   wcout << "exe_path=" << exe_path << "\n";
   update_path = exe_path + UPDATE_DIR + _T("\\");
