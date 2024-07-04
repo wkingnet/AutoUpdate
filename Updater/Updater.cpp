@@ -66,19 +66,31 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
   }
 
   // 获取程序运行路径
+  bool 成功获取路径 = false;
   const auto exeFullPath = new wchar_t[2000];
   if (const size_t nSize = GetModuleFileName(nullptr, exeFullPath, 2000)) {
-    PathCchRemoveFileSpec(exeFullPath, nSize); // 删掉最后的文件名，只保留路径
+    // PathCchRemoveFileSpec方法 最小系统要求win8，兼容性太差，不用此方法
+    // PathCchRemoveFileSpec(exeFullPath, nSize); // 删掉最后的文件名，只保留路径
+
+    wchar_t drive[_MAX_DRIVE];
+    wchar_t dir[_MAX_DIR];
+    wchar_t fname[_MAX_FNAME];
+    wchar_t ext[_MAX_EXT];
+    if (!_wsplitpath_s(exeFullPath, drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT)) {
+      exe_path = drive;
+      exe_path += dir;
+      wcout << "exe_path=" << exe_path << "\n";
+      delete[] exeFullPath;
+      成功获取路径 = true;
+    }
   }
-  else {
+
+  if (!成功获取路径) {
     MessageBox(nullptr, TEXT("获取程序所在路径失败，程序退出"), TEXT("AutoUpdater"), MB_OK | MB_ICONERROR);
     delete[] exeFullPath;
     return 0;
   }
-  exe_path = exeFullPath;
-  exe_path += TEXT("\\"); // 末尾增加‘\’
-  delete[] exeFullPath;
-  wcout << "exe_path=" << exe_path << "\n";
+
   update_path = exe_path + UPDATE_DIR + _T("\\");
 
   // 获取命令行参数
